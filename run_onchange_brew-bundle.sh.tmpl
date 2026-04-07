@@ -1,0 +1,7 @@
+#!/bin/bash
+# This script runs automatically via chezmoi when Brewfile changes.
+# The hash below changes whenever Brewfile is updated, triggering a re-run.
+# {{ include "Brewfile" | sha256sum }}
+
+set -e
+brew bundle --file="{{ .chezmoi.sourceDir }}/Brewfile"
