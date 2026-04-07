@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -12,7 +12,7 @@ fi
 
 echo "==> Installing Homebrew..."
 if ! command -v brew &>/dev/null; then
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  /bin/bash -c "$(curl -fsSL --connect-timeout 30 --max-time 300 https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   # Add brew to PATH for Apple Silicon
   eval "$(/opt/homebrew/bin/brew shellenv)" 2>/dev/null || eval "$(/usr/local/bin/brew shellenv)"
 fi
@@ -22,7 +22,7 @@ brew bundle --file="$SCRIPT_DIR/Brewfile" --no-lock
 
 echo "==> Installing oh-my-zsh..."
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
-  RUNZSH=no CHSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+  RUNZSH=no CHSH=no sh -c "$(curl -fsSL --connect-timeout 30 --max-time 300 https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 fi
 
 echo "==> Installing Powerlevel10k theme..."
