@@ -39,5 +39,65 @@ fi
 echo "==> Applying dotfiles with chezmoi..."
 chezmoi apply --source="$SCRIPT_DIR/home"
 
+echo "==> Configuring macOS system defaults..."
+# Key repeat — faster typing, no press-and-hold popup
+defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
+defaults write NSGlobalDomain KeyRepeat -int 2
+defaults write NSGlobalDomain InitialKeyRepeat -int 15
+# Dock — auto-hide with no delay
+defaults write com.apple.dock autohide -bool true
+defaults write com.apple.dock autohide-delay -float 0
+defaults write com.apple.dock autohide-time-modifier -float 0.5
+# Finder — show hidden files and full path in title bar
+defaults write com.apple.finder AppleShowAllFiles -bool true
+defaults write com.apple.finder _FXShowPosixPathInTitle -bool true
+# Disable .DS_Store on network and USB volumes
+defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool true
+defaults write com.apple.desktopservices DSDontWriteUSBStores -bool true
+# Restart affected apps to apply
+killall Dock 2>/dev/null || true
+killall Finder 2>/dev/null || true
+
+echo "==> Configuring git globals..."
+# Set delta as git pager for beautiful diffs
+git config --global core.pager delta
+git config --global interactive.diffFilter "delta --color-only"
+git config --global delta.navigate true
+git config --global delta.dark true
+git config --global merge.conflictstyle diff3
+git config --global diff.colorMoved default
+# Useful git defaults
+git config --global pull.rebase false
+git config --global init.defaultBranch main
+# Prompt for identity if not already set
+if [ -z "$(git config --global user.name)" ]; then
+  printf "Enter your full name for git config: "
+  read -r git_name
+  git config --global user.name "$git_name"
+fi
+if [ -z "$(git config --global user.email)" ]; then
+  printf "Enter your email for git config: "
+  read -r git_email
+  git config --global user.email "$git_email"
+fi
+
+echo "==> Setting up SSH key..."
+if [ ! -f "$HOME/.ssh/id_ed25519" ]; then
+  ssh-keygen -t ed25519 -C "$(git config --global user.email)" -f "$HOME/.ssh/id_ed25519" -N ""
+  ssh-add --apple-use-keychain "$HOME/.ssh/id_ed25519"
+  echo ""
+  echo "Your SSH public key (add this to GitHub → Settings → SSH Keys):"
+  echo "---"
+  cat "$HOME/.ssh/id_ed25519.pub"
+  echo "---"
+else
+  echo "SSH key already exists, skipping."
+fi
+
+echo "==> Configuring fzf shell integration..."
+if command -v fzf &>/dev/null; then
+  "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc --no-bash --no-fish 2>/dev/null || true
+fi
+
 echo ""
 echo "Bootstrap complete! Restart your terminal to apply shell changes."
