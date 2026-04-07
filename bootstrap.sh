@@ -72,12 +72,12 @@ git config --global init.defaultBranch main
 # Prompt for identity if not already set
 if [ -z "$(git config --global user.name)" ]; then
   printf "Enter your full name for git config: "
-  read -r git_name
+  read -r git_name </dev/tty
   git config --global user.name "$git_name"
 fi
 if [ -z "$(git config --global user.email)" ]; then
   printf "Enter your email for git config: "
-  read -r git_email
+  read -r git_email </dev/tty
   git config --global user.email "$git_email"
 fi
 
