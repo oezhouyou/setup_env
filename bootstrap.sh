@@ -108,6 +108,15 @@ else
   echo "SSH key already exists, skipping."
 fi
 
+echo "==> Setting up weekly brew maintenance cron job..."
+BREW_CRON="0 9 * * 1 /opt/homebrew/bin/brew update && /opt/homebrew/bin/brew upgrade 2>&1 | /usr/bin/logger -t brew-upgrade"
+if ! crontab -l 2>/dev/null | grep -q "brew update"; then
+  (crontab -l 2>/dev/null; echo "$BREW_CRON") | crontab -
+  echo "Weekly brew update scheduled (Mondays at 9am)."
+else
+  echo "Brew cron job already exists, skipping."
+fi
+
 echo "==> Configuring fzf shell integration..."
 if command -v fzf &>/dev/null; then
   "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc --no-bash --no-fish 2>/dev/null || true
