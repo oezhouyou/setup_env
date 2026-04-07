@@ -13,6 +13,7 @@ brew "delta"
 brew "lazygit"
 brew "htop"
 brew "pandoc"
+cask "basictex"
 
 # Apps
 cask "iterm2"
