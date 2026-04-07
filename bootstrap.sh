@@ -108,14 +108,41 @@ else
   echo "SSH key already exists, skipping."
 fi
 
-echo "==> Setting up weekly brew maintenance cron job..."
-BREW_CRON="0 9 * * 1 /opt/homebrew/bin/brew update && /opt/homebrew/bin/brew upgrade 2>&1 | /usr/bin/logger -t brew-upgrade"
-if ! crontab -l 2>/dev/null | grep -q "brew update"; then
-  (crontab -l 2>/dev/null; echo "$BREW_CRON") | crontab -
-  echo "Weekly brew update scheduled (Mondays at 9am)."
+echo "==> Setting up weekly brew maintenance (launchd)..."
+# launchd with StartInterval catches up missed runs when the Mac wakes from sleep.
+# cron does not — it silently skips runs if the machine was off.
+PLIST_PATH="$HOME/Library/LaunchAgents/com.brewupdate.plist"
+if [ ! -f "$PLIST_PATH" ]; then
+  cat > "$PLIST_PATH" << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.brewupdate</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>/opt/homebrew/bin/brew update &amp;&amp; /opt/homebrew/bin/brew upgrade 2&gt;&amp;1 | /usr/bin/logger -t brew-upgrade</string>
+    </array>
+    <key>StartInterval</key>
+    <integer>604800</integer>
+    <key>StandardOutPath</key>
+    <string>/tmp/brew-upgrade.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/brew-upgrade.log</string>
+</dict>
+</plist>
+EOF
+  launchctl load "$PLIST_PATH"
+  echo "Weekly brew update launchd agent installed."
 else
-  echo "Brew cron job already exists, skipping."
+  echo "Brew launchd agent already exists, skipping."
 fi
+
+# Remove old cron job if present from previous bootstrap runs
+crontab -l 2>/dev/null | grep -v "brew update" | crontab - 2>/dev/null || true
 
 echo "==> Configuring fzf shell integration..."
 if command -v fzf &>/dev/null; then
