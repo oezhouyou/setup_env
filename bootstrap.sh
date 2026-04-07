@@ -2,6 +2,7 @@
 set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+GITHUB_DOTFILES="https://github.com/you-fractional/macbook_setup.git"
 
 echo "==> Installing Xcode CLI tools..."
 if ! xcode-select -p &>/dev/null; then
@@ -36,8 +37,14 @@ if ! command -v chezmoi &>/dev/null; then
   brew install chezmoi
 fi
 
-echo "==> Applying dotfiles with chezmoi..."
-chezmoi apply --source="$SCRIPT_DIR/home"
+echo "==> Initializing chezmoi from GitHub and applying dotfiles..."
+# On first run: clones repo to ~/.local/share/chezmoi and applies dotfiles.
+# On subsequent runs (if already initialized): updates from GitHub instead.
+if [ -d "$HOME/.local/share/chezmoi/.git" ]; then
+  chezmoi update
+else
+  chezmoi init --apply "$GITHUB_DOTFILES"
+fi
 
 echo "==> Configuring macOS system defaults..."
 # Key repeat — faster typing, no press-and-hold popup
