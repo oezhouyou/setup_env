@@ -1,0 +1,13 @@
+#!/bin/bash
+# Reloads the brew update launchd agent whenever the plist changes.
+# The hash below changes when the plist is updated, triggering a re-run.
+# {{ include "Library/LaunchAgents/com.brewupdate.plist" | sha256sum }}
+
+PLIST="$HOME/Library/LaunchAgents/com.brewupdate.plist"
+
+# Unload existing agent (ignore errors if not loaded)
+launchctl unload "$PLIST" 2>/dev/null || true
+
+# Load updated agent
+launchctl load "$PLIST"
+echo "com.brewupdate launchd agent (re)loaded."
