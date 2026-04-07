@@ -40,8 +40,8 @@ vscode "charliermarsh.ruff"
 vscode "eamodio.gitlens"
 vscode "ms-toolsai.jupyter"
 vscode "ms-python.debugpy"
-vscode "ms-vscode-remote.remote-ssh"
-vscode "ms-vscode-remote.remote-containers"
+# Note: remote-ssh and remote-containers must be installed manually in Cursor
+# (Microsoft proprietary — not tracked correctly by brew bundle with Cursor)
 vscode "ms-azuretools.vscode-docker"
 vscode "usernamehw.errorlens"
 vscode "redhat.vscode-yaml"
