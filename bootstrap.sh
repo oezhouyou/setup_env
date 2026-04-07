@@ -5,10 +5,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GITHUB_DOTFILES="https://github.com/you-fractional/macbook_setup.git"
 
 # Prompt for sudo once upfront so pkg-based cask installs don't interrupt the process.
-# A background loop refreshes the token every 60s for the duration of the script.
+# Refresh every 10s to beat the tty_tickets timeout on macOS.
 echo "==> Requesting sudo access (required for some app installers)..."
 sudo -v
-while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+while true; do sudo -v; sleep 10; kill -0 "$$" || exit; done 2>/dev/null &
 SUDO_KEEPALIVE_PID=$!
 
 echo "==> Installing Xcode CLI tools..."
