@@ -12,6 +12,7 @@ brew "jq"
 brew "delta"
 brew "lazygit"
 brew "htop"
+brew "pandoc"
 
 # Apps
 cask "iterm2"
