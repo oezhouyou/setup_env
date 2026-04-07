@@ -1,0 +1,5 @@
+# Not dotfiles — don't copy these to ~
+bootstrap.sh
+docs/
+macbook_setup.md
+.gitignore
