@@ -28,6 +28,8 @@ cask "linearmouse"
 cask "docker"
 cask "ollama"
 cask "raycast"
+cask "tableplus"
+cask "proxyman"
 
 # Cursor extensions (VS Code compatible)
 vscode "anthropic.claude-code"
