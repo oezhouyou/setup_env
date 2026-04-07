@@ -18,7 +18,7 @@ if ! command -v brew &>/dev/null; then
 fi
 
 echo "==> Installing packages from Brewfile..."
-brew bundle --file="$SCRIPT_DIR/Brewfile" --no-lock
+brew bundle --file="$SCRIPT_DIR/Brewfile"
 
 echo "==> Installing oh-my-zsh..."
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
