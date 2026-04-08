@@ -141,4 +141,7 @@ export PATH="$HOME/.local/bin:$PATH"
 {{- else if eq .profile "personal" }}
 # Personal profile extras
 [ -f ~/.personal_aliases ] && source ~/.personal_aliases
+{{- else if eq .profile "consult" }}
+# Consult profile extras
+[ -f ~/.consult_aliases ] && source ~/.consult_aliases
 {{- end }}

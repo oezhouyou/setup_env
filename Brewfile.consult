@@ -1,4 +1,4 @@
-# Personal-only tools — installed in addition to base Brewfile
+# Consult-only tools — installed in addition to base Brewfile
 brew "pandoc"
 cask "basictex"
 
@@ -33,4 +33,3 @@ vscode "ms-azuretools.vscode-docker"
 vscode "usernamehw.errorlens"
 vscode "redhat.vscode-yaml"
 vscode "humao.rest-client"
-
