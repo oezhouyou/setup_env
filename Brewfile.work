@@ -1,0 +1,4 @@
+# Work-only tools — installed in addition to base Brewfile
+cask "1password"
+cask "viscosity"        # VPN client
+brew "awscli"

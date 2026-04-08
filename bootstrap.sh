@@ -45,8 +45,9 @@ if ! command -v chezmoi &>/dev/null; then
 fi
 
 echo "==> Initializing chezmoi from GitHub and applying dotfiles..."
-# On first run: clones repo to ~/.local/share/chezmoi and applies dotfiles.
-# On subsequent runs (if already initialized): updates from GitHub instead.
+# On first run: chezmoi reads .chezmoi.toml.tmpl, prompts for profile (personal/work),
+# stores it in ~/.config/chezmoi/chezmoi.toml, then applies dotfiles.
+# On subsequent runs: updates from GitHub using the saved profile.
 if [ -d "$HOME/.local/share/chezmoi/.git" ]; then
   chezmoi update
 else
