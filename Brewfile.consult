@@ -1,24 +1,10 @@
 # Consult-only tools — installed in addition to base Brewfile
-brew "pandoc"
-cask "basictex"
 
 # Apps
-cask "iterm2"
-cask "brave-browser"
 cask "cursor"
 cask "claude"
 cask "slack"
-cask "zoom"
-cask "notion"
-cask "microsoft-teams"
-cask "fathom"
-cask "granola"
-cask "linearmouse"
 cask "docker-desktop"
-cask "ollama-app"
-cask "raycast"
-cask "tableplus"
-cask "proxyman"
 
 # Cursor extensions (VS Code compatible)
 vscode "anthropic.claude-code"
