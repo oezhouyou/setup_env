@@ -84,6 +84,8 @@ if [ -n "$CURRENT_PROFILE" ]; then
 fi
 
 echo "==> Configuring macOS system defaults..."
+# Dark mode
+osascript -e 'tell app "System Events" to tell appearance preferences to set dark mode to true'
 # Key repeat — faster typing, no press-and-hold popup
 defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
 defaults write NSGlobalDomain KeyRepeat -int 2
