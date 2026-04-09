@@ -4,6 +4,18 @@ set -eo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GITHUB_DOTFILES="https://github.com/you-fractional/macbook_setup.git"
 
+# Pre-flight: require git identity to be set before running.
+# Set these before running bootstrap:
+#   git config --global user.name "Your Name"
+#   git config --global user.email "you@example.com"
+if [ -z "$(git config --global user.name 2>/dev/null)" ] || \
+   [ -z "$(git config --global user.email 2>/dev/null)" ]; then
+  echo "ERROR: Git identity not set. Run these first:"
+  echo "  git config --global user.name \"Your Name\""
+  echo "  git config --global user.email \"you@example.com\""
+  exit 1
+fi
+
 # Prompt for sudo once upfront so pkg-based cask installs don't interrupt the process.
 # Refresh every 10s to beat the tty_tickets timeout on macOS.
 echo "==> Requesting sudo access (required for some app installers)..."
@@ -26,7 +38,7 @@ if ! command -v brew &>/dev/null; then
 fi
 
 echo "==> Installing packages from Brewfile..."
-brew bundle --file="$SCRIPT_DIR/Brewfile"
+brew bundle --file="$SCRIPT_DIR/Brewfile" || brew bundle --file="$SCRIPT_DIR/Brewfile"
 
 echo "==> Installing oh-my-zsh..."
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
@@ -79,7 +91,7 @@ if [ -n "$CURRENT_PROFILE" ]; then
   PROFILE_BREWFILE="$(chezmoi source-path)/Brewfile.$CURRENT_PROFILE"
   if [ -f "$PROFILE_BREWFILE" ]; then
     echo "==> Installing $CURRENT_PROFILE profile packages..."
-    brew bundle --file="$PROFILE_BREWFILE" || true
+    brew bundle --file="$PROFILE_BREWFILE" || brew bundle --file="$PROFILE_BREWFILE" || true
   fi
 fi
 
@@ -115,17 +127,7 @@ git config --global diff.colorMoved default
 # Useful git defaults
 git config --global pull.rebase false
 git config --global init.defaultBranch main
-# Prompt for identity if not already set
-if [ -z "$(git config --global user.name)" ]; then
-  printf "Enter your full name for git config: "
-  read -r git_name </dev/tty
-  git config --global user.name "$git_name"
-fi
-if [ -z "$(git config --global user.email)" ]; then
-  printf "Enter your email for git config: "
-  read -r git_email </dev/tty
-  git config --global user.email "$git_email"
-fi
+# Identity already validated in pre-flight check above.
 
 echo "==> Setting up SSH key..."
 if [ ! -f "$HOME/.ssh/id_ed25519" ]; then
