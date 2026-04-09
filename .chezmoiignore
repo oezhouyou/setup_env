@@ -5,7 +5,6 @@ Brewfile.work
 Brewfile.personal
 Brewfile.consult
 run_onchange_brew-bundle.sh.tmpl
-run_onchange_brew-bundle-profile.sh.tmpl
 run_onchange_load-brewupdate.sh.tmpl
 docs/
 macbook_setup.md

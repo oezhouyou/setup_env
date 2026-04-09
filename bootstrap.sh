@@ -62,15 +62,25 @@ fi
 if [ ! -d "$HOME/.local/share/chezmoi/.git" ]; then
   # First run — init prompts for profile via .chezmoi.toml.tmpl
   chezmoi init --apply "$GITHUB_DOTFILES"
-  echo "$CURRENT_PROFILE" > "$PROFILE_STATE"
+  CURRENT_PROFILE=$(grep 'profile' "$CHEZMOI_CONFIG" | sed 's/.*= *"\(.*\)"/\1/')
 elif [ -n "$CURRENT_PROFILE" ] && [ "$CURRENT_PROFILE" != "$LAST_PROFILE" ]; then
   # Profile changed — reinit to reset onchange state and apply new profile
   echo "Profile changed ($LAST_PROFILE → $CURRENT_PROFILE), reinitializing chezmoi..."
   chezmoi init --apply "$GITHUB_DOTFILES"
-  echo "$CURRENT_PROFILE" > "$PROFILE_STATE"
 else
   # Same profile — just pull latest from GitHub
   chezmoi update
+fi
+
+# Always save current profile and run profile Brewfile explicitly.
+# run_onchange_ is unreliable for this since profile changes reset chezmoi state.
+echo "$CURRENT_PROFILE" > "$PROFILE_STATE"
+if [ -n "$CURRENT_PROFILE" ]; then
+  PROFILE_BREWFILE="$(chezmoi source-path)/Brewfile.$CURRENT_PROFILE"
+  if [ -f "$PROFILE_BREWFILE" ]; then
+    echo "==> Installing $CURRENT_PROFILE profile packages..."
+    brew bundle --file="$PROFILE_BREWFILE" || true
+  fi
 fi
 
 echo "==> Configuring macOS system defaults..."
