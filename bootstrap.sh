@@ -45,13 +45,32 @@ if ! command -v chezmoi &>/dev/null; then
 fi
 
 echo "==> Initializing chezmoi from GitHub and applying dotfiles..."
-# On first run: chezmoi reads .chezmoi.toml.tmpl, prompts for profile (personal/work),
-# stores it in ~/.config/chezmoi/chezmoi.toml, then applies dotfiles.
-# On subsequent runs: updates from GitHub using the saved profile.
-if [ -d "$HOME/.local/share/chezmoi/.git" ]; then
-  chezmoi update
-else
+# Compare the current profile in chezmoi.toml against the last-applied profile.
+# If they differ (or first run), reinit to reset chezmoi onchange state so
+# profile-specific Brewfile and dotfile conditionals re-run from scratch.
+CHEZMOI_CONFIG="$HOME/.config/chezmoi/chezmoi.toml"
+PROFILE_STATE="$HOME/.config/chezmoi/.last_profile"
+CURRENT_PROFILE=""
+if [ -f "$CHEZMOI_CONFIG" ]; then
+  CURRENT_PROFILE=$(grep 'profile' "$CHEZMOI_CONFIG" | sed 's/.*= *"\(.*\)"/\1/')
+fi
+LAST_PROFILE=""
+if [ -f "$PROFILE_STATE" ]; then
+  LAST_PROFILE=$(cat "$PROFILE_STATE")
+fi
+
+if [ ! -d "$HOME/.local/share/chezmoi/.git" ]; then
+  # First run — init prompts for profile via .chezmoi.toml.tmpl
   chezmoi init --apply "$GITHUB_DOTFILES"
+  echo "$CURRENT_PROFILE" > "$PROFILE_STATE"
+elif [ -n "$CURRENT_PROFILE" ] && [ "$CURRENT_PROFILE" != "$LAST_PROFILE" ]; then
+  # Profile changed — reinit to reset onchange state and apply new profile
+  echo "Profile changed ($LAST_PROFILE → $CURRENT_PROFILE), reinitializing chezmoi..."
+  chezmoi init --apply "$GITHUB_DOTFILES"
+  echo "$CURRENT_PROFILE" > "$PROFILE_STATE"
+else
+  # Same profile — just pull latest from GitHub
+  chezmoi update
 fi
 
 echo "==> Configuring macOS system defaults..."
