@@ -4,7 +4,9 @@
 cask "cursor"
 cask "claude"
 cask "slack"
+cask "zoom"
 cask "docker-desktop"
+cask "azure-cli"
 
 # Cursor extensions (VS Code compatible)
 vscode "anthropic.claude-code"
