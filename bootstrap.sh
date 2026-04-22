@@ -95,6 +95,10 @@ if [ -n "$CURRENT_PROFILE" ]; then
   fi
 fi
 
+# Claude Code is installed via npm (faster release cadence than the Homebrew cask).
+echo "==> Installing/updating Claude Code via npm..."
+npm install -g @anthropic-ai/claude-code@latest
+
 echo "==> Configuring macOS system defaults..."
 # Dark mode
 osascript -e 'tell app "System Events" to tell appearance preferences to set dark mode to true'
