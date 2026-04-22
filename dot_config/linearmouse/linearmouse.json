@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schema.linearmouse.app/0.10.4",
+  "schemes": [
+    {
+      "if": {
+        "device": {
+          "category": "trackpad"
+        }
+      },
+      "scrolling": {
+        "reverse": {
+          "vertical": true
+        }
+      }
+    }
+  ]
+}

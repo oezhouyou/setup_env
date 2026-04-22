@@ -2,19 +2,17 @@
 set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-GITHUB_DOTFILES="https://github.com/you-fractional/macbook_setup.git"
-
-# Pre-flight: require git identity to be set before running.
-# Set these before running bootstrap:
-#   git config --global user.name "Your Name"
-#   git config --global user.email "you@example.com"
-if [ -z "$(git config --global user.name 2>/dev/null)" ] || \
-   [ -z "$(git config --global user.email 2>/dev/null)" ]; then
-  echo "ERROR: Git identity not set. Run these first:"
-  echo "  git config --global user.name \"Your Name\""
-  echo "  git config --global user.email \"you@example.com\""
+# Repo URL used by chezmoi init. Defaults to the origin of the repo this
+# script lives in, so forks work out of the box. Override with:
+#   GITHUB_DOTFILES=https://github.com/you/macbook_setup.git ./bootstrap.sh
+GITHUB_DOTFILES="${GITHUB_DOTFILES:-$(git -C "$SCRIPT_DIR" remote get-url origin 2>/dev/null)}"
+if [ -z "$GITHUB_DOTFILES" ]; then
+  echo "ERROR: could not determine repo URL. Set GITHUB_DOTFILES or run this script from a cloned repo."
   exit 1
 fi
+
+# Git identity is prompted by chezmoi init (.chezmoi.toml.tmpl) and written
+# to ~/.gitconfig via dot_gitconfig.tmpl — no pre-flight needed.
 
 # Prompt for sudo once upfront so pkg-based cask installs don't interrupt the process.
 # Refresh every 10s to beat the tty_tickets timeout on macOS.
@@ -119,19 +117,6 @@ defaults write com.apple.desktopservices DSDontWriteUSBStores -bool true
 # Restart affected apps to apply
 killall Dock 2>/dev/null || true
 killall Finder 2>/dev/null || true
-
-echo "==> Configuring git globals..."
-# Set delta as git pager for beautiful diffs
-git config --global core.pager delta
-git config --global interactive.diffFilter "delta --color-only"
-git config --global delta.navigate true
-git config --global delta.dark true
-git config --global merge.conflictstyle diff3
-git config --global diff.colorMoved default
-# Useful git defaults
-git config --global pull.rebase false
-git config --global init.defaultBranch main
-# Identity already validated in pre-flight check above.
 
 echo "==> Setting up SSH key..."
 if [ ! -f "$HOME/.ssh/id_ed25519" ]; then
