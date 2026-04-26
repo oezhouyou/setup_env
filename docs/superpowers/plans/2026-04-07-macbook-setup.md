@@ -31,7 +31,7 @@ No `.chezmoi.toml.tmpl` needed — we pass `--source` directly on the CLI, which
 - [ ] **Step 1: Init git repo**
 
 ```bash
-cd /Users/youzhou/wkspace/macbook_setup
+cd ~/wkspace/macbook_setup
 git init
 ```
 
@@ -43,7 +43,7 @@ Expected: `Initialized empty Git repository in .../macbook_setup/.git/`
 .DS_Store
 ```
 
-Save as `/Users/youzhou/wkspace/macbook_setup/.gitignore`.
+Save as `~/wkspace/macbook_setup/.gitignore`.
 
 - [ ] **Step 3: Stage and commit**
 
@@ -84,7 +84,7 @@ cask "linearmouse"
 vscode "anthropic.claude-code"
 ```
 
-Save as `/Users/youzhou/wkspace/macbook_setup/Brewfile`.
+Save as `~/wkspace/macbook_setup/Brewfile`.
 
 - [ ] **Step 2: Verify Brewfile syntax and check current install status**
 
@@ -112,15 +112,15 @@ git commit -m "feat: add Brewfile with formulae, casks, and editor extensions"
 - [ ] **Step 1: Create home/ directory and copy dotfiles**
 
 ```bash
-mkdir -p /Users/youzhou/wkspace/macbook_setup/home
-cp ~/.zshrc /Users/youzhou/wkspace/macbook_setup/home/dot_zshrc
-cp ~/.p10k.zsh /Users/youzhou/wkspace/macbook_setup/home/dot_p10k.zsh
+mkdir -p ~/wkspace/macbook_setup/home
+cp ~/.zshrc ~/wkspace/macbook_setup/home/dot_zshrc
+cp ~/.p10k.zsh ~/wkspace/macbook_setup/home/dot_p10k.zsh
 ```
 
 - [ ] **Step 2: Verify chezmoi dry-run applies them correctly**
 
 ```bash
-chezmoi apply --dry-run --verbose --source=/Users/youzhou/wkspace/macbook_setup/home 2>&1
+chezmoi apply --dry-run --verbose --source=~/wkspace/macbook_setup/home 2>&1
 ```
 
 Expected output includes lines like:
@@ -192,18 +192,18 @@ echo ""
 echo "Bootstrap complete! Restart your terminal to apply shell changes."
 ```
 
-Save as `/Users/youzhou/wkspace/macbook_setup/bootstrap.sh`.
+Save as `~/wkspace/macbook_setup/bootstrap.sh`.
 
 - [ ] **Step 2: Make executable**
 
 ```bash
-chmod +x /Users/youzhou/wkspace/macbook_setup/bootstrap.sh
+chmod +x ~/wkspace/macbook_setup/bootstrap.sh
 ```
 
 - [ ] **Step 3: Syntax check**
 
 ```bash
-bash -n /Users/youzhou/wkspace/macbook_setup/bootstrap.sh
+bash -n ~/wkspace/macbook_setup/bootstrap.sh
 ```
 
 Expected: No output (clean syntax).
@@ -211,7 +211,7 @@ Expected: No output (clean syntax).
 - [ ] **Step 4: Verify SCRIPT_DIR resolves correctly**
 
 ```bash
-cd /Users/youzhou/wkspace/macbook_setup && bash -c 'source bootstrap.sh; echo $SCRIPT_DIR' 2>/dev/null || true
+cd ~/wkspace/macbook_setup && bash -c 'source bootstrap.sh; echo $SCRIPT_DIR' 2>/dev/null || true
 # Alternatively just spot-check the variable expansion manually
 bash -c 'SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; echo "$SCRIPT_DIR"' 
 ```
@@ -232,7 +232,7 @@ git commit -m "feat: add bootstrap.sh entry point"
 - [ ] **Step 1: Verify all cask names resolve in brew**
 
 ```bash
-cd /Users/youzhou/wkspace/macbook_setup
+cd ~/wkspace/macbook_setup
 brew bundle check --file=./Brewfile --verbose 2>&1 | grep -E "(Using|Installing|not installed)"
 ```
 
@@ -241,7 +241,7 @@ Expected: All entries show `Using ...` (already installed). No errors about unkn
 - [ ] **Step 2: Verify chezmoi apply is idempotent**
 
 ```bash
-chezmoi apply --dry-run --verbose --source=/Users/youzhou/wkspace/macbook_setup/home 2>&1
+chezmoi apply --dry-run --verbose --source=~/wkspace/macbook_setup/home 2>&1
 ```
 
 Expected: All files show as unchanged (since they match the current dotfiles exactly).
@@ -249,7 +249,7 @@ Expected: All files show as unchanged (since they match the current dotfiles exa
 - [ ] **Step 3: Verify bootstrap.sh reports clean on a pre-installed machine**
 
 ```bash
-cd /Users/youzhou/wkspace/macbook_setup
+cd ~/wkspace/macbook_setup
 bash bootstrap.sh 2>&1
 ```
 
