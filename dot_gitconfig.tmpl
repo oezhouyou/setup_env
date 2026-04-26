@@ -1,0 +1,19 @@
+[core]
+	pager = delta
+	excludesfile = {{ .chezmoi.homeDir }}/.config/git/ignore
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	navigate = true
+	dark = true
+[merge]
+	conflictstyle = diff3
+[diff]
+	colorMoved = default
+[pull]
+	rebase = false
+[init]
+	defaultBranch = main
+[user]
+	name = {{ .gitName }}
+	email = {{ .gitEmail }}

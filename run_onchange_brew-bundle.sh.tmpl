@@ -1,0 +1,9 @@
+#!/bin/bash
+# This script runs automatically via chezmoi when Brewfile changes.
+# The hash below changes whenever Brewfile is updated, triggering a re-run.
+# {{ include "Brewfile" | sha256sum }}
+
+# Some casks (zoom, microsoft-teams, docker) require interactive sudo and must be
+# installed manually from a terminal. brew bundle exits 1 for those but we don't
+# want chezmoi to abort — the || true here lets chezmoi continue on partial failures.
+brew bundle --file="{{ .chezmoi.sourceDir }}/Brewfile" || true
