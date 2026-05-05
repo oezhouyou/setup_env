@@ -1,4 +1,20 @@
-# Work-only tools — installed in addition to base Brewfile
+# Admin work-machine install - shared packages/apps plus admin user's editor extensions.
+# Run this once from the admin account. Additional local users should run Brewfile.user.
+
+# CLI tools
+brew "node"
+brew "uv"
+brew "neonctl"
+brew "gh"
+brew "ripgrep"
+brew "fzf"
+brew "bat"
+brew "eza"
+brew "fd"
+brew "jq"
+brew "delta"
+brew "lazygit"
+brew "htop"
 brew "pandoc"
 cask "basictex"
 
@@ -28,7 +44,7 @@ vscode "eamodio.gitlens"
 vscode "ms-toolsai.jupyter"
 vscode "ms-python.debugpy"
 # Note: remote-ssh and remote-containers must be installed manually in Cursor
-# (Microsoft proprietary — not tracked correctly by brew bundle with Cursor)
+# (Microsoft proprietary - not tracked correctly by brew bundle with Cursor)
 vscode "ms-azuretools.vscode-docker"
 vscode "usernamehw.errorlens"
 vscode "redhat.vscode-yaml"

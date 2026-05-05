@@ -86,9 +86,13 @@ fi
 # run_onchange_ is unreliable for this since profile changes reset chezmoi state.
 echo "$CURRENT_PROFILE" > "$PROFILE_STATE"
 if [ -n "$CURRENT_PROFILE" ]; then
-  PROFILE_BREWFILE="$(chezmoi source-path)/Brewfile.$CURRENT_PROFILE"
+  BREWFILE_PROFILE="$CURRENT_PROFILE"
+  if [ "$BREWFILE_PROFILE" = "work" ]; then
+    BREWFILE_PROFILE="admin"
+  fi
+  PROFILE_BREWFILE="$(chezmoi source-path)/Brewfile.$BREWFILE_PROFILE"
   if [ -f "$PROFILE_BREWFILE" ]; then
-    echo "==> Installing $CURRENT_PROFILE profile packages..."
+    echo "==> Installing $BREWFILE_PROFILE profile packages..."
     brew bundle --file="$PROFILE_BREWFILE" || brew bundle --file="$PROFILE_BREWFILE" || true
   fi
 fi

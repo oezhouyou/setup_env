@@ -1,7 +1,8 @@
 # Not dotfiles — don't copy these to ~
 bootstrap.sh
 Brewfile
-Brewfile.work
+Brewfile.admin
+Brewfile.user
 Brewfile.personal
 Brewfile.consult
 run_onchange_brew-bundle.sh.tmpl

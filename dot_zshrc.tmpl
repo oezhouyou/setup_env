@@ -135,7 +135,7 @@ export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
 export PATH="$HOME/.local/bin:$PATH"
 
 # --- Profile-specific config ---
-{{- if eq .profile "work" }}
+{{- if or (eq .profile "work") (eq .profile "admin") (eq .profile "user") }}
 # Work profile extras
 [ -f ~/.work_aliases ] && source ~/.work_aliases
 {{- else if eq .profile "personal" }}
