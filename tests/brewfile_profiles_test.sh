@@ -26,6 +26,21 @@ if ! grep -q 'Brewfile.user' "$ROOT/Brewfile.admin"; then
   exit 1
 fi
 
+if ! grep -q '^cask "azure-cli"$' "$ROOT/Brewfile.admin"; then
+  echo "Brewfile.admin should include azure-cli."
+  exit 1
+fi
+
+if [ -e "$ROOT/Brewfile.personal" ]; then
+  echo "Brewfile.personal should be removed."
+  exit 1
+fi
+
+if grep -q 'personal' "$ROOT/.chezmoi.toml.tmpl" "$ROOT/.chezmoiignore"; then
+  echo "chezmoi profile config should not advertise Brewfile.personal."
+  exit 1
+fi
+
 if ! grep -q '^profile_brewfile_names()' "$ROOT/bootstrap.sh"; then
   echo "bootstrap.sh should expose profile_brewfile_names for testable Brewfile sequencing."
   exit 1
@@ -50,5 +65,4 @@ assert_sequence() {
 assert_sequence admin "Brewfile Brewfile.admin Brewfile.user"
 assert_sequence work "Brewfile Brewfile.admin Brewfile.user"
 assert_sequence user "Brewfile.user"
-assert_sequence personal "Brewfile Brewfile.personal"
 assert_sequence consult "Brewfile Brewfile.consult"
