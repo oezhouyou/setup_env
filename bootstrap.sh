@@ -2,6 +2,41 @@
 set -eo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+run_brew_bundle() {
+  local label="$1"
+  local brewfile="$2"
+  local tolerate_failure="${3:-false}"
+
+  echo "==> Installing $label..."
+  if [ "$tolerate_failure" = "true" ]; then
+    brew bundle --file="$brewfile" || brew bundle --file="$brewfile" || true
+  else
+    brew bundle --file="$brewfile" || brew bundle --file="$brewfile"
+  fi
+}
+
+profile_brewfile_names() {
+  case "$1" in
+    work|admin)
+      printf '%s\n' Brewfile Brewfile.admin Brewfile.user
+      ;;
+    user)
+      printf '%s\n' Brewfile.user
+      ;;
+    "")
+      printf '%s\n' Brewfile
+      ;;
+    *)
+      printf '%s\n' Brewfile "Brewfile.$1"
+      ;;
+  esac
+}
+
+if [ "${SETUP_ENV_BOOTSTRAP_LIB_ONLY:-}" = "1" ]; then
+  return 0 2>/dev/null || exit 0
+fi
+
 # Repo URL used by chezmoi init. Defaults to the origin of the repo this
 # script lives in, so forks work out of the box. Override with:
 #   GITHUB_DOTFILES=https://github.com/you/macbook_setup.git ./bootstrap.sh
@@ -28,15 +63,25 @@ if ! xcode-select -p &>/dev/null; then
   exit 0
 fi
 
-echo "==> Installing Homebrew..."
+echo "==> Setting up Homebrew..."
+if ! command -v brew &>/dev/null; then
+  if [ -x /opt/homebrew/bin/brew ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [ -x /usr/local/bin/brew ]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
+fi
+
 if ! command -v brew &>/dev/null; then
   /bin/bash -c "$(curl -fsSL --connect-timeout 30 --max-time 300 https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   # Add brew to PATH for Apple Silicon
   eval "$(/opt/homebrew/bin/brew shellenv)" 2>/dev/null || eval "$(/usr/local/bin/brew shellenv)"
 fi
 
-echo "==> Installing packages from Brewfile..."
-brew bundle --file="$SCRIPT_DIR/Brewfile" || brew bundle --file="$SCRIPT_DIR/Brewfile"
+echo "==> Installing chezmoi..."
+if ! command -v chezmoi &>/dev/null; then
+  brew install chezmoi
+fi
 
 echo "==> Installing oh-my-zsh..."
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
@@ -47,11 +92,6 @@ echo "==> Installing Powerlevel10k theme..."
 P10K_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
 if [ ! -d "$P10K_DIR" ]; then
   git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$P10K_DIR"
-fi
-
-echo "==> Installing chezmoi..."
-if ! command -v chezmoi &>/dev/null; then
-  brew install chezmoi
 fi
 
 echo "==> Initializing chezmoi from GitHub and applying dotfiles..."
@@ -85,17 +125,17 @@ fi
 # Always save current profile and run profile Brewfile explicitly.
 # run_onchange_ is unreliable for this since profile changes reset chezmoi state.
 echo "$CURRENT_PROFILE" > "$PROFILE_STATE"
-if [ -n "$CURRENT_PROFILE" ]; then
-  BREWFILE_PROFILE="$CURRENT_PROFILE"
-  if [ "$BREWFILE_PROFILE" = "work" ]; then
-    BREWFILE_PROFILE="admin"
-  fi
-  PROFILE_BREWFILE="$(chezmoi source-path)/Brewfile.$BREWFILE_PROFILE"
+for PROFILE_BREWFILE_NAME in $(profile_brewfile_names "$CURRENT_PROFILE"); do
+  PROFILE_BREWFILE="$(chezmoi source-path)/$PROFILE_BREWFILE_NAME"
   if [ -f "$PROFILE_BREWFILE" ]; then
-    echo "==> Installing $BREWFILE_PROFILE profile packages..."
-    brew bundle --file="$PROFILE_BREWFILE" || brew bundle --file="$PROFILE_BREWFILE" || true
+    BREWFILE_PROFILE="${PROFILE_BREWFILE_NAME#Brewfile.}"
+    TOLERATE_BREW_FAILURE=true
+    if [ "$PROFILE_BREWFILE_NAME" = "Brewfile" ]; then
+      TOLERATE_BREW_FAILURE=false
+    fi
+    run_brew_bundle "$BREWFILE_PROFILE packages" "$PROFILE_BREWFILE" "$TOLERATE_BREW_FAILURE"
   fi
-fi
+done
 
 # Claude Code is installed via npm (faster release cadence than the Homebrew cask).
 echo "==> Installing/updating Claude Code via npm..."

@@ -1,5 +1,5 @@
-# Admin work-machine install - shared packages/apps plus admin user's editor extensions.
-# Run this once from the admin account. Additional local users should run Brewfile.user.
+# Admin work-machine install - shared packages/apps only.
+# Run Brewfile.user after this for the admin user's per-user tools.
 
 # CLI tools
 brew "node"
@@ -35,17 +35,3 @@ cask "ollama-app"
 cask "raycast"
 cask "tableplus"
 cask "proxyman"
-
-# Cursor extensions (VS Code compatible)
-vscode "anthropic.claude-code"
-vscode "ms-python.python"
-vscode "charliermarsh.ruff"
-vscode "eamodio.gitlens"
-vscode "ms-toolsai.jupyter"
-vscode "ms-python.debugpy"
-# Note: remote-ssh and remote-containers must be installed manually in Cursor
-# (Microsoft proprietary - not tracked correctly by brew bundle with Cursor)
-vscode "ms-azuretools.vscode-docker"
-vscode "usernamehw.errorlens"
-vscode "redhat.vscode-yaml"
-vscode "humao.rest-client"
