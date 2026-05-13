@@ -144,6 +144,10 @@ done
 echo "==> Installing/updating Claude Code via npm..."
 npm install -g @anthropic-ai/claude-code@latest
 
+# Codex CLI is installed via npm to match the latest CLI release.
+echo "==> Installing/updating Codex CLI via npm..."
+npm install -g @openai/codex@latest
+
 echo "==> Configuring macOS system defaults..."
 # Dark mode
 osascript -e 'tell app "System Events" to tell appearance preferences to set dark mode to true'

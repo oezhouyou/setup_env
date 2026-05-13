@@ -2,6 +2,7 @@
 
 # Apps
 cask "cursor"
+cask "codex-app"
 cask "claude"
 cask "slack"
 cask "zoom"

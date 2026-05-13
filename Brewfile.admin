@@ -5,6 +5,7 @@
 cask "iterm2"
 cask "brave-browser"
 cask "cursor"
+cask "codex-app"
 cask "claude"
 cask "slack"
 cask "zoom"

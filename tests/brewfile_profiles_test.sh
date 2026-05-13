@@ -45,6 +45,21 @@ if grep -q '^cask "azure-cli"$' "$ROOT/Brewfile.admin" "$ROOT/Brewfile.client"; 
   exit 1
 fi
 
+if ! grep -q '^cask "codex-app"$' "$ROOT/Brewfile.admin"; then
+  echo "Brewfile.admin should include the Codex desktop app."
+  exit 1
+fi
+
+if ! grep -q '^cask "codex-app"$' "$ROOT/Brewfile.client"; then
+  echo "Brewfile.client should include the Codex desktop app."
+  exit 1
+fi
+
+if ! grep -q '@openai/codex@latest' "$ROOT/bootstrap.sh"; then
+  echo "bootstrap.sh should install Codex CLI via npm."
+  exit 1
+fi
+
 if [ -e "$ROOT/Brewfile.personal" ]; then
   echo "Brewfile.personal should be removed."
   exit 1
