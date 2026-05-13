@@ -1,22 +1,5 @@
-# Admin work-machine install - shared packages/apps only.
-# Run Brewfile.user after this for the admin user's per-user tools.
-
-# CLI tools
-brew "node"
-brew "uv"
-brew "neonctl"
-brew "gh"
-brew "ripgrep"
-brew "fzf"
-brew "bat"
-brew "eza"
-brew "fd"
-brew "jq"
-brew "delta"
-brew "lazygit"
-brew "htop"
-brew "pandoc"
-cask "basictex"
+# Admin work-machine install - admin-only shared apps.
+# Run Brewfile before this for shared CLI tools, then Brewfile.user for per-user tools.
 
 # Apps
 cask "iterm2"

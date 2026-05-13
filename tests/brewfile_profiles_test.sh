@@ -8,16 +8,25 @@ active_entries() {
 }
 
 admin_entries="$(mktemp)"
+base_entries="$(mktemp)"
 user_entries="$(mktemp)"
-trap 'rm -f "$admin_entries" "$user_entries"' EXIT
+trap 'rm -f "$admin_entries" "$base_entries" "$user_entries"' EXIT
 
+active_entries "$ROOT/Brewfile" > "$base_entries"
 active_entries "$ROOT/Brewfile.admin" > "$admin_entries"
 active_entries "$ROOT/Brewfile.user" > "$user_entries"
 
-overlap="$(comm -12 "$admin_entries" "$user_entries")"
-if [ -n "$overlap" ]; then
+base_admin_overlap="$(comm -12 "$base_entries" "$admin_entries")"
+if [ -n "$base_admin_overlap" ]; then
+  echo "Brewfile and Brewfile.admin must not repeat active entries:"
+  echo "$base_admin_overlap"
+  exit 1
+fi
+
+admin_user_overlap="$(comm -12 "$admin_entries" "$user_entries")"
+if [ -n "$admin_user_overlap" ]; then
   echo "Brewfile.admin and Brewfile.user must not repeat active entries:"
-  echo "$overlap"
+  echo "$admin_user_overlap"
   exit 1
 fi
 
