@@ -24,6 +24,9 @@ profile_brewfile_names() {
     user)
       printf '%s\n' Brewfile.user
       ;;
+    client)
+      printf '%s\n' Brewfile Brewfile.client
+      ;;
     "")
       printf '%s\n' Brewfile
       ;;

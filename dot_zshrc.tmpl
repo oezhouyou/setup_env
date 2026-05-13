@@ -138,7 +138,7 @@ export PATH="$HOME/.local/bin:$PATH"
 {{- if or (eq .profile "work") (eq .profile "admin") (eq .profile "user") }}
 # Work profile extras
 [ -f ~/.work_aliases ] && source ~/.work_aliases
-{{- else if eq .profile "consult" }}
-# Consult profile extras
-[ -f ~/.consult_aliases ] && source ~/.consult_aliases
+{{- else if eq .profile "client" }}
+# Client profile extras
+[ -f ~/.client_aliases ] && source ~/.client_aliases
 {{- end }}

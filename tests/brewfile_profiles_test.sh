@@ -35,8 +35,13 @@ if ! grep -q 'Brewfile.user' "$ROOT/Brewfile.admin"; then
   exit 1
 fi
 
-if ! grep -q '^cask "azure-cli"$' "$ROOT/Brewfile.admin"; then
-  echo "Brewfile.admin should include azure-cli."
+if ! grep -q '^brew "azure-cli"$' "$ROOT/Brewfile.admin"; then
+  echo "Brewfile.admin should include azure-cli as a formula."
+  exit 1
+fi
+
+if grep -q '^cask "azure-cli"$' "$ROOT/Brewfile.admin" "$ROOT/Brewfile.client"; then
+  echo "azure-cli should be declared as a formula, not a cask."
   exit 1
 fi
 
@@ -45,8 +50,25 @@ if [ -e "$ROOT/Brewfile.personal" ]; then
   exit 1
 fi
 
+if [ ! -e "$ROOT/Brewfile.client" ]; then
+  echo "Brewfile.client should exist."
+  exit 1
+fi
+
+old_profile="con""sult"
+
+if [ -e "$ROOT/Brewfile.$old_profile" ]; then
+  echo "Old client profile Brewfile should be renamed."
+  exit 1
+fi
+
 if grep -q 'personal' "$ROOT/.chezmoi.toml.tmpl" "$ROOT/.chezmoiignore"; then
   echo "chezmoi profile config should not advertise Brewfile.personal."
+  exit 1
+fi
+
+if rg -n "$old_profile" --hidden -g '!.git' "$ROOT"; then
+  echo "Old client profile keyword should not remain in the repo."
   exit 1
 fi
 
@@ -74,4 +96,11 @@ assert_sequence() {
 assert_sequence admin "Brewfile Brewfile.admin Brewfile.user"
 assert_sequence work "Brewfile Brewfile.admin Brewfile.user"
 assert_sequence user "Brewfile.user"
-assert_sequence consult "Brewfile Brewfile.consult"
+assert_sequence client "Brewfile Brewfile.client"
+
+client_zsh="$(chezmoi execute-template --override-data '{"profile":"client"}' < "$ROOT/dot_zshrc.tmpl")"
+
+if ! grep -q '\.client_aliases' <<<"$client_zsh"; then
+  echo "client profile should source ~/.client_aliases."
+  exit 1
+fi

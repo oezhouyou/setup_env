@@ -3,7 +3,7 @@ bootstrap.sh
 Brewfile
 Brewfile.admin
 Brewfile.user
-Brewfile.consult
+Brewfile.client
 run_onchange_brew-bundle.sh.tmpl
 run_onchange_load-brewupdate.sh.tmpl
 docs/
