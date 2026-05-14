@@ -36,9 +36,63 @@ profile_brewfile_names() {
   esac
 }
 
+profile_needs_sudo() {
+  case "$1" in
+    user)
+      return 1
+      ;;
+    *)
+      return 0
+      ;;
+  esac
+}
+
+SUDO_KEEPALIVE_PID=""
+
+start_sudo_keepalive() {
+  # Prompt for sudo once upfront so pkg-based cask installs don't interrupt the process.
+  # Refresh every 10s to beat the tty_tickets timeout on macOS.
+  echo "==> Requesting sudo access (required for some app installers)..."
+  sudo -v
+  while true; do sudo -v; sleep 10; kill -0 "$$" || exit; done 2>/dev/null &
+  SUDO_KEEPALIVE_PID=$!
+}
+
+stop_sudo_keepalive() {
+  if [ -n "$SUDO_KEEPALIVE_PID" ]; then
+    kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
+    SUDO_KEEPALIVE_PID=""
+  fi
+}
+
+install_npm_global() {
+  local package="$1"
+
+  if [ "$CURRENT_PROFILE" = "user" ]; then
+    mkdir -p "$HOME/.local"
+    npm install -g --prefix "$HOME/.local" "$package"
+  else
+    npm install -g "$package"
+  fi
+}
+
+install_npm_cli() {
+  local command_name="$1"
+  local package="$2"
+
+  if [ "$CURRENT_PROFILE" = "user" ] && command -v "$command_name" &>/dev/null; then
+    echo "==> $command_name already available; using existing install."
+    return 0
+  fi
+
+  install_npm_global "$package"
+}
+
 if [ "${SETUP_ENV_BOOTSTRAP_LIB_ONLY:-}" = "1" ]; then
   return 0 2>/dev/null || exit 0
 fi
+
+trap stop_sudo_keepalive EXIT
 
 # Repo URL used by chezmoi init. Defaults to the origin of the repo this
 # script lives in, so forks work out of the box. Override with:
@@ -51,13 +105,6 @@ fi
 
 # Git identity is prompted by chezmoi init (.chezmoi.toml.tmpl) and written
 # to ~/.gitconfig via dot_gitconfig.tmpl — no pre-flight needed.
-
-# Prompt for sudo once upfront so pkg-based cask installs don't interrupt the process.
-# Refresh every 10s to beat the tty_tickets timeout on macOS.
-echo "==> Requesting sudo access (required for some app installers)..."
-sudo -v
-while true; do sudo -v; sleep 10; kill -0 "$$" || exit; done 2>/dev/null &
-SUDO_KEEPALIVE_PID=$!
 
 echo "==> Installing Xcode CLI tools..."
 if ! xcode-select -p &>/dev/null; then
@@ -128,6 +175,12 @@ fi
 # Always save current profile and run profile Brewfile explicitly.
 # run_onchange_ is unreliable for this since profile changes reset chezmoi state.
 echo "$CURRENT_PROFILE" > "$PROFILE_STATE"
+if profile_needs_sudo "$CURRENT_PROFILE"; then
+  start_sudo_keepalive
+else
+  echo "==> Skipping sudo preflight for user profile..."
+fi
+
 for PROFILE_BREWFILE_NAME in $(profile_brewfile_names "$CURRENT_PROFILE"); do
   PROFILE_BREWFILE="$(chezmoi source-path)/$PROFILE_BREWFILE_NAME"
   if [ -f "$PROFILE_BREWFILE" ]; then
@@ -142,11 +195,11 @@ done
 
 # Claude Code is installed via npm (faster release cadence than the Homebrew cask).
 echo "==> Installing/updating Claude Code via npm..."
-npm install -g @anthropic-ai/claude-code@latest
+install_npm_cli claude @anthropic-ai/claude-code@latest
 
 # Codex CLI is installed via npm to match the latest CLI release.
 echo "==> Installing/updating Codex CLI via npm..."
-npm install -g @openai/codex@latest
+install_npm_cli codex @openai/codex@latest
 
 echo "==> Configuring macOS system defaults..."
 # Dark mode
@@ -192,7 +245,7 @@ if command -v fzf &>/dev/null; then
   "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc --no-bash --no-fish 2>/dev/null || true
 fi
 
-kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
+stop_sudo_keepalive
 
 echo ""
 echo "Bootstrap complete! Restart your terminal to apply shell changes."
