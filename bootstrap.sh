@@ -193,9 +193,7 @@ for PROFILE_BREWFILE_NAME in $(profile_brewfile_names "$CURRENT_PROFILE"); do
   fi
 done
 
-# Claude Code is installed via npm (faster release cadence than the Homebrew cask).
-echo "==> Installing/updating Claude Code via npm..."
-install_npm_cli claude @anthropic-ai/claude-code@latest
+# Claude Code install/update intentionally skipped in bootstrap.
 
 # Codex CLI is installed via npm to match the latest CLI release.
 echo "==> Installing/updating Codex CLI via npm..."
