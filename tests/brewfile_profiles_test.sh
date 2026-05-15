@@ -124,6 +124,30 @@ assert_sequence work "Brewfile Brewfile.admin Brewfile.user"
 assert_sequence user "Brewfile.user"
 assert_sequence client "Brewfile Brewfile.client"
 
+assert_effective_profile() {
+  local profile="$1"
+  local can_sudo="$2"
+  local expected="$3"
+  local actual
+
+  actual="$(effective_profile "$profile" "$can_sudo")"
+  if [ "$actual" != "$expected" ]; then
+    echo "Unexpected effective profile for profile '$profile' with can_sudo=$can_sudo"
+    echo "Expected: $expected"
+    echo "Actual:   $actual"
+    exit 1
+  fi
+}
+
+assert_effective_profile admin true admin
+assert_effective_profile work true work
+assert_effective_profile client true client
+assert_effective_profile user true user
+assert_effective_profile admin false user
+assert_effective_profile work false user
+assert_effective_profile client false user
+assert_effective_profile user false user
+
 if profile_needs_sudo user; then
   echo "user profile should not request sudo preflight."
   exit 1

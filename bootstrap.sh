@@ -47,6 +47,22 @@ profile_needs_sudo() {
   esac
 }
 
+current_user_can_sudo() {
+  id -Gn | tr ' ' '\n' | grep -qx admin
+}
+
+effective_profile() {
+  local profile="$1"
+  local can_sudo="$2"
+
+  if [ "$can_sudo" != "true" ] && profile_needs_sudo "$profile"; then
+    printf '%s\n' user
+    return 0
+  fi
+
+  printf '%s\n' "$profile"
+}
+
 SUDO_KEEPALIVE_PID=""
 
 start_sudo_keepalive() {
@@ -175,10 +191,20 @@ fi
 # Always save current profile and run profile Brewfile explicitly.
 # run_onchange_ is unreliable for this since profile changes reset chezmoi state.
 echo "$CURRENT_PROFILE" > "$PROFILE_STATE"
+CAN_SUDO=false
+if current_user_can_sudo; then
+  CAN_SUDO=true
+fi
+RUN_PROFILE="$(effective_profile "$CURRENT_PROFILE" "$CAN_SUDO")"
+if [ "$RUN_PROFILE" != "$CURRENT_PROFILE" ]; then
+  echo "==> Profile '$CURRENT_PROFILE' requires sudo, but user $(id -un) is not an admin. Running per-user setup only."
+  echo "==> Run bootstrap from an admin account with profile 'admin' to install shared apps."
+fi
+CURRENT_PROFILE="$RUN_PROFILE"
 if profile_needs_sudo "$CURRENT_PROFILE"; then
   start_sudo_keepalive
 else
-  echo "==> Skipping sudo preflight for user profile..."
+  echo "==> Skipping sudo preflight for $CURRENT_PROFILE profile..."
 fi
 
 for PROFILE_BREWFILE_NAME in $(profile_brewfile_names "$CURRENT_PROFILE"); do
