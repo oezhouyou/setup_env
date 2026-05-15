@@ -211,6 +211,32 @@ if [ "$captured_npm_args" != "install -g @example/shared@latest" ]; then
 fi
 unset -f npm
 
+cat > "$temp_home/bin/code" <<'EOF'
+#!/bin/sh
+printf '%s\n' "$*" >> "$CODE_CALLS"
+EOF
+chmod +x "$temp_home/bin/code"
+
+cat > "$temp_home/bin/brew" <<'EOF'
+#!/bin/sh
+echo "brew should not be called for Brewfile.user" >&2
+exit 42
+EOF
+chmod +x "$temp_home/bin/brew"
+
+code_calls="$temp_home/code_calls"
+CODE_CALLS="$code_calls" PATH="$temp_home/bin:$PATH" run_profile_brewfile user Brewfile.user "$ROOT/Brewfile.user" "user packages" true
+
+if ! grep -q -- '--install-extension openai.chatgpt' "$code_calls"; then
+  echo "Brewfile.user should install the OpenAI Codex extension through the editor CLI."
+  exit 1
+fi
+
+if ! grep -q -- '--install-extension anthropic.claude-code' "$code_calls"; then
+  echo "Brewfile.user should install VS Code-compatible extensions through the editor CLI."
+  exit 1
+fi
+
 user_brew_hook="$(chezmoi execute-template --override-data '{"profile":"user"}' < "$ROOT/run_onchange_brew-bundle.sh.tmpl")"
 if grep -q '^brew bundle ' <<<"$user_brew_hook"; then
   echo "user profile should not run the base Brewfile onchange hook."

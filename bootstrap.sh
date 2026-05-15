@@ -16,6 +16,44 @@ run_brew_bundle() {
   fi
 }
 
+vscode_extension_command() {
+  command -v code || command -v codium || command -v cursor || command -v code-insiders
+}
+
+install_vscode_extensions_from_brewfile() {
+  local brewfile="$1"
+  local editor_cli=""
+  local extension=""
+
+  if ! editor_cli="$(vscode_extension_command)"; then
+    echo "ERROR: no VS Code-compatible CLI found for installing editor extensions."
+    echo "Install VS Code, Cursor, VSCodium, or VS Code Insiders and make its CLI available in PATH."
+    return 1
+  fi
+
+  echo "==> Installing editor extensions with $(basename "$editor_cli")..."
+  awk -F'"' '/^[[:space:]]*vscode[[:space:]]+"/ { print $2 }' "$brewfile" | while IFS= read -r extension; do
+    [ -n "$extension" ] || continue
+    echo "Installing $extension"
+    "$editor_cli" --install-extension "$extension"
+  done
+}
+
+run_profile_brewfile() {
+  local profile="$1"
+  local brewfile_name="$2"
+  local brewfile="$3"
+  local label="$4"
+  local tolerate_failure="${5:-false}"
+
+  if [ "$profile" = "user" ] && [ "$brewfile_name" = "Brewfile.user" ]; then
+    install_vscode_extensions_from_brewfile "$brewfile"
+    return
+  fi
+
+  run_brew_bundle "$label" "$brewfile" "$tolerate_failure"
+}
+
 profile_brewfile_names() {
   case "$1" in
     work|admin)
@@ -215,7 +253,7 @@ for PROFILE_BREWFILE_NAME in $(profile_brewfile_names "$CURRENT_PROFILE"); do
     if [ "$PROFILE_BREWFILE_NAME" = "Brewfile" ]; then
       TOLERATE_BREW_FAILURE=false
     fi
-    run_brew_bundle "$BREWFILE_PROFILE packages" "$PROFILE_BREWFILE" "$TOLERATE_BREW_FAILURE"
+    run_profile_brewfile "$CURRENT_PROFILE" "$PROFILE_BREWFILE_NAME" "$PROFILE_BREWFILE" "$BREWFILE_PROFILE packages" "$TOLERATE_BREW_FAILURE"
   fi
 done
 
