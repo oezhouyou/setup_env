@@ -10,6 +10,7 @@ cask "docker-desktop"
 brew "azure-cli"
 
 # Cursor extensions (VS Code compatible)
+vscode "openai.chatgpt"
 vscode "anthropic.claude-code"
 vscode "ms-python.python"
 vscode "charliermarsh.ruff"

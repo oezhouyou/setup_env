@@ -2,6 +2,7 @@
 # Shared formulae and cask apps are installed once by Brewfile.admin from an admin account.
 
 # Cursor extensions (VS Code compatible)
+vscode "openai.chatgpt"
 vscode "anthropic.claude-code"
 vscode "ms-python.python"
 vscode "charliermarsh.ruff"

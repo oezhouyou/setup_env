@@ -56,6 +56,16 @@ if ! grep -q '^cask "codex-app"$' "$ROOT/Brewfile.client"; then
   exit 1
 fi
 
+if ! grep -q '^vscode "openai.chatgpt"$' "$ROOT/Brewfile.user"; then
+  echo "Brewfile.user should include the OpenAI Codex VS Code extension."
+  exit 1
+fi
+
+if ! grep -q '^vscode "openai.chatgpt"$' "$ROOT/Brewfile.client"; then
+  echo "Brewfile.client should include the OpenAI Codex VS Code extension."
+  exit 1
+fi
+
 if ! grep -q '@openai/codex@latest' "$ROOT/bootstrap.sh"; then
   echo "bootstrap.sh should install Codex CLI via npm."
   exit 1
