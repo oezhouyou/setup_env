@@ -4,8 +4,10 @@ Brewfile
 Brewfile.admin
 Brewfile.user
 Brewfile.client
+Brewfile.npm
 run_onchange_brew-bundle.sh.tmpl
 run_onchange_load-brewupdate.sh.tmpl
+run_weekly_update.sh
 docs/
 macbook_setup.md
 .gitignore

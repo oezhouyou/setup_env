@@ -1,0 +1,4 @@
+# npm CLI tools
+# Keep @latest so scheduled brew bundle runs refresh these tools.
+npm "@anthropic-ai/claude-code@latest"
+npm "@openai/codex@latest"

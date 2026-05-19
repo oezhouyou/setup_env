@@ -16,6 +16,18 @@ run_brew_bundle() {
   fi
 }
 
+run_npm_brewfile() {
+  local brewfile="$1"
+
+  if [ ! -f "$brewfile" ]; then
+    return 0
+  fi
+
+  echo "==> Installing npm CLI tools..."
+  mkdir -p "$HOME/.local"
+  NPM_CONFIG_PREFIX="$HOME/.local" brew bundle --file="$brewfile" || NPM_CONFIG_PREFIX="$HOME/.local" brew bundle --file="$brewfile"
+}
+
 vscode_extension_command() {
   command -v code || command -v codium || command -v cursor || command -v code-insiders
 }
@@ -117,29 +129,6 @@ stop_sudo_keepalive() {
     kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
     SUDO_KEEPALIVE_PID=""
   fi
-}
-
-install_npm_global() {
-  local package="$1"
-
-  if [ "$CURRENT_PROFILE" = "user" ]; then
-    mkdir -p "$HOME/.local"
-    npm install -g --prefix "$HOME/.local" "$package"
-  else
-    npm install -g "$package"
-  fi
-}
-
-install_npm_cli() {
-  local command_name="$1"
-  local package="$2"
-
-  if [ "$CURRENT_PROFILE" = "user" ] && command -v "$command_name" &>/dev/null; then
-    echo "==> $command_name already available; using existing install."
-    return 0
-  fi
-
-  install_npm_global "$package"
 }
 
 if [ "${SETUP_ENV_BOOTSTRAP_LIB_ONLY:-}" = "1" ]; then
@@ -257,11 +246,8 @@ for PROFILE_BREWFILE_NAME in $(profile_brewfile_names "$CURRENT_PROFILE"); do
   fi
 done
 
-# Claude Code install/update intentionally skipped in bootstrap.
-
-# Codex CLI is installed via npm to match the latest CLI release.
-echo "==> Installing/updating Codex CLI via npm..."
-install_npm_cli codex @openai/codex@latest
+NPM_BREWFILE="$(chezmoi source-path)/Brewfile.npm"
+run_npm_brewfile "$NPM_BREWFILE"
 
 echo "==> Configuring macOS system defaults..."
 # Dark mode

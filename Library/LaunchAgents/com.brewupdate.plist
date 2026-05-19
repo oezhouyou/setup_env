@@ -8,7 +8,7 @@
     <array>
         <string>/bin/bash</string>
         <string>-c</string>
-        <string>/opt/homebrew/bin/brew update &amp;&amp; /opt/homebrew/bin/brew upgrade 2&gt;&amp;1 | /usr/bin/logger -t brew-upgrade</string>
+        <string>"$HOME/.local/share/chezmoi/run_weekly_update.sh" 2&gt;&amp;1 | /usr/bin/logger -t brew-upgrade</string>
     </array>
     <key>StartInterval</key>
     <integer>604800</integer>

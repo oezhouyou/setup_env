@@ -66,8 +66,63 @@ if ! grep -q '^vscode "openai.chatgpt"$' "$ROOT/Brewfile.client"; then
   exit 1
 fi
 
-if ! grep -q '@openai/codex@latest' "$ROOT/bootstrap.sh"; then
-  echo "bootstrap.sh should install Codex CLI via npm."
+if [ ! -e "$ROOT/Brewfile.npm" ]; then
+  echo "Brewfile.npm should exist for npm-managed CLI tools."
+  exit 1
+fi
+
+for npm_package in '@anthropic-ai/claude-code@latest' '@openai/codex@latest'; do
+  if ! grep -q "^npm \"$npm_package\"$" "$ROOT/Brewfile.npm"; then
+    echo "Brewfile.npm should include $npm_package."
+    exit 1
+  fi
+
+  if grep -q "$npm_package" "$ROOT/bootstrap.sh"; then
+    echo "bootstrap.sh should install $npm_package through Brewfile.npm, not hardcoded npm install calls."
+    exit 1
+  fi
+done
+
+if ! grep -q 'Brewfile.npm' "$ROOT/.chezmoiignore"; then
+  echo ".chezmoiignore should keep Brewfile.npm in the source repo only."
+  exit 1
+fi
+
+if ! grep -q '\$HOME/.local/share/chezmoi/run_weekly_update.sh' "$ROOT/Library/LaunchAgents/com.brewupdate.plist"; then
+  echo "weekly brew update agent should delegate to run_weekly_update.sh."
+  exit 1
+fi
+
+if grep -q '/opt/homebrew/bin/brew update' "$ROOT/Library/LaunchAgents/com.brewupdate.plist"; then
+  echo "weekly brew update agent should not duplicate the update flow inline."
+  exit 1
+fi
+
+if ! grep -q '/usr/bin/logger -t brew-upgrade' "$ROOT/Library/LaunchAgents/com.brewupdate.plist"; then
+  echo "weekly brew update agent should preserve brew-upgrade logging."
+  exit 1
+fi
+
+if [ ! -x "$ROOT/run_weekly_update.sh" ]; then
+  echo "run_weekly_update.sh should exist and be executable for manual weekly updates."
+  exit 1
+fi
+
+for weekly_pattern in \
+  'SCRIPT_DIR=' \
+  'chezmoi git -- pull --ff-only' \
+  'PATH=.*\$HOME/.local/bin.*/opt/homebrew/bin' \
+  'NPM_CONFIG_PREFIX="\$HOME/.local"' \
+  'NPM_BREWFILE="\${NPM_BREWFILE:-\$SCRIPT_DIR/Brewfile.npm}"'
+do
+  if ! grep -q "$weekly_pattern" "$ROOT/run_weekly_update.sh"; then
+    echo "run_weekly_update.sh should include weekly flow pattern: $weekly_pattern"
+    exit 1
+  fi
+done
+
+if ! grep -q 'run_weekly_update.sh' "$ROOT/.chezmoiignore"; then
+  echo ".chezmoiignore should keep run_weekly_update.sh in the source repo only."
   exit 1
 fi
 
@@ -160,56 +215,37 @@ for privileged_profile in admin work client ""; do
   fi
 done
 
-captured_npm_args=""
-npm() {
-  captured_npm_args="$*"
-}
-
 saved_home="$HOME"
 HOME="$temp_home"
-CURRENT_PROFILE=user
-install_npm_global @example/tool@latest
+captured_brew_args=""
+captured_npm_prefix=""
+brew() {
+  captured_brew_args="$*"
+  captured_npm_prefix="${NPM_CONFIG_PREFIX:-}"
+}
+
+run_npm_brewfile "$ROOT/Brewfile.npm"
 HOME="$saved_home"
-if [ "$captured_npm_args" != "install -g --prefix $temp_home/.local @example/tool@latest" ]; then
-  echo "user profile should install global npm tools into ~/.local."
-  echo "Actual: $captured_npm_args"
+
+if [ "$captured_brew_args" != "bundle --file=$ROOT/Brewfile.npm" ]; then
+  echo "npm Brewfile should be installed through brew bundle."
+  echo "Actual: $captured_brew_args"
   exit 1
 fi
 
-CURRENT_PROFILE=admin
-install_npm_global @example/tool@latest
-if [ "$captured_npm_args" != "install -g @example/tool@latest" ]; then
-  echo "privileged profiles should keep the normal global npm install path."
-  echo "Actual: $captured_npm_args"
+if [ "$captured_npm_prefix" != "$temp_home/.local" ]; then
+  echo "npm Brewfile should install CLI tools into ~/.local for predictable user-level updates."
+  echo "Actual: $captured_npm_prefix"
   exit 1
 fi
+
+if [ ! -d "$temp_home/.local" ]; then
+  echo "npm Brewfile should create ~/.local before using it as npm prefix."
+  exit 1
+fi
+unset -f brew
 
 mkdir -p "$temp_home/bin"
-touch "$temp_home/bin/sharedtool"
-chmod +x "$temp_home/bin/sharedtool"
-
-saved_path="$PATH"
-PATH="$temp_home/bin:$PATH"
-captured_npm_args=""
-CURRENT_PROFILE=user
-install_npm_cli sharedtool @example/shared@latest >/dev/null
-PATH="$saved_path"
-if [ -n "$captured_npm_args" ]; then
-  echo "user profile should use an existing shared CLI instead of installing locally."
-  echo "Actual: $captured_npm_args"
-  exit 1
-fi
-
-PATH="$temp_home/bin:$PATH"
-CURRENT_PROFILE=admin
-install_npm_cli sharedtool @example/shared@latest >/dev/null
-PATH="$saved_path"
-if [ "$captured_npm_args" != "install -g @example/shared@latest" ]; then
-  echo "privileged profiles should update shared CLIs even when the command already exists."
-  echo "Actual: $captured_npm_args"
-  exit 1
-fi
-unset -f npm
 
 cat > "$temp_home/bin/code" <<'EOF'
 #!/bin/sh
