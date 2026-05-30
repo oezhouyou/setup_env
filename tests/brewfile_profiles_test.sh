@@ -139,6 +139,22 @@ if grep -q '^export NPM_CONFIG_PREFIX=' "$ROOT/run_weekly_update.sh"; then
   exit 1
 fi
 
+# A blanket `brew upgrade --greedy` force-upgrades every self-updating cask,
+# including root-owned ones (Notion, Teams, ...) that a non-root run cannot
+# chown -- producing "Operation not permitted" failures. Greedy must instead be
+# scoped to the specific casks whose Sparkle self-updater we disabled. Inspect
+# only command lines so the rationale comments may mention the avoided form.
+weekly_commands="$(grep -v '^[[:space:]]*#' "$ROOT/run_weekly_update.sh")"
+if printf '%s\n' "$weekly_commands" | grep -q 'brew upgrade --greedy'; then
+  echo "run_weekly_update.sh must not use a blanket 'brew upgrade --greedy' (chown failures on root-owned self-updaters)."
+  exit 1
+fi
+
+if ! printf '%s\n' "$weekly_commands" | grep -q 'brew upgrade --cask --greedy'; then
+  echo "run_weekly_update.sh should scope --greedy to the disabled-self-updater casks (brew upgrade --cask --greedy ...)."
+  exit 1
+fi
+
 if ! grep -q 'run_weekly_update.sh' "$ROOT/.chezmoiignore"; then
   echo ".chezmoiignore should keep run_weekly_update.sh in the source repo only."
   exit 1

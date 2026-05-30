@@ -39,9 +39,13 @@ Open each app and flip the setting:
 
 ## Notes
 
+- The weekly script does NOT run a blanket `brew upgrade --greedy`. That would
+  force-upgrade every self-updating cask, including root-owned ones (Notion,
+  Teams, VS Code, Zoom, Granola), which a non-root run cannot `chown` -- it fails
+  with "Operation not permitted". Instead it scopes `--greedy` to only the six
+  Sparkle casks whose updater it disabled (all user-owned).
 - Apps marked "no user toggle" cannot be reliably stopped without MDM/profiles.
-  For those, `brew upgrade --greedy` simply keeps the cask metadata in sync; the
-  app may have already updated itself.
+  brew does not touch them; they keep updating themselves.
 - Re-check this list after any major app reinstall — settings can reset.
 - The Sparkle apps are re-disabled on every weekly run (the script re-applies the
   `defaults` each time), since apps sometimes rewrite these keys on launch/update.

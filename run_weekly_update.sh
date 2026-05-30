@@ -45,6 +45,21 @@ SPARKLE_BUNDLE_IDS=(
   com.openai.codex        # codex-app
 )
 
+# Cask tokens for the same apps. Their cask metadata still has auto_updates=true,
+# so a plain `brew upgrade` skips them; once the in-app updater is disabled, brew
+# is their only update path and must force them with --greedy. We scope --greedy
+# to exactly these (all user-owned) rather than a blanket `brew upgrade --greedy`,
+# which would also try to upgrade self-updating apps we left alone (Notion, Teams,
+# VS Code, ...) that are root-owned and fail with chown "Operation not permitted".
+SPARKLE_CASKS=(
+  iterm2
+  proxyman
+  tableplus
+  brave-browser
+  linearmouse
+  codex-app
+)
+
 disable_sparkle_auto_update() {
   for bid in "${SPARKLE_BUNDLE_IDS[@]}"; do
     defaults write "$bid" SUEnableAutomaticChecks -bool false 2>/dev/null || true
@@ -52,11 +67,25 @@ disable_sparkle_auto_update() {
   done
 }
 
+# Force-upgrade only the disabled-self-updater casks that are actually installed.
+# A single cask failure must not abort the weekly run, so it is logged and skipped.
+upgrade_disabled_self_updaters() {
+  local installed cask
+  installed="$(/opt/homebrew/bin/brew list --cask 2>/dev/null)"
+  for cask in "${SPARKLE_CASKS[@]}"; do
+    if printf '%s\n' "$installed" | grep -qx "$cask"; then
+      /opt/homebrew/bin/brew upgrade --cask --greedy "$cask" \
+        || echo "Warning: failed to upgrade cask $cask; continuing."
+    fi
+  done
+}
+
 mkdir -p "$NPM_CONFIG_PREFIX"
 
 disable_sparkle_auto_update
 
-/opt/homebrew/bin/brew update && /opt/homebrew/bin/brew upgrade --greedy
+/opt/homebrew/bin/brew update && /opt/homebrew/bin/brew upgrade
+upgrade_disabled_self_updaters
 /opt/homebrew/bin/chezmoi git -- pull --ff-only || true
 
 if [ -f "$NPM_BREWFILE" ]; then
