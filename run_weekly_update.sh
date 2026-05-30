@@ -29,9 +29,34 @@ load_nvm_node() {
   nvm use default
 }
 
+# Sparkle-based apps whose built-in self-updater we can disable from a script,
+# so the weekly `brew upgrade --greedy` run below becomes the single update
+# point. Each entry is a CFBundleIdentifier; the trailing comment is the cask.
+#
+# NOTE: the remaining auto-updating casks do not use Sparkle and must be turned
+# off from within each app's own settings. See:
+#   docs/disable-auto-update-checklist.md
+SPARKLE_BUNDLE_IDS=(
+  com.googlecode.iterm2   # iterm2
+  com.proxyman.NSProxy    # proxyman
+  com.tinyapp.TablePlus   # tableplus
+  com.brave.Browser       # brave-browser
+  com.lujjjh.LinearMouse  # linearmouse
+  com.openai.codex        # codex-app
+)
+
+disable_sparkle_auto_update() {
+  for bid in "${SPARKLE_BUNDLE_IDS[@]}"; do
+    defaults write "$bid" SUEnableAutomaticChecks -bool false 2>/dev/null || true
+    defaults write "$bid" SUAutomaticallyUpdate -bool false 2>/dev/null || true
+  done
+}
+
 mkdir -p "$NPM_CONFIG_PREFIX"
 
-/opt/homebrew/bin/brew update && /opt/homebrew/bin/brew upgrade
+disable_sparkle_auto_update
+
+/opt/homebrew/bin/brew update && /opt/homebrew/bin/brew upgrade --greedy
 /opt/homebrew/bin/chezmoi git -- pull --ff-only || true
 
 if [ -f "$NPM_BREWFILE" ]; then

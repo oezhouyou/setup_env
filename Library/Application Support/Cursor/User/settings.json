@@ -1,5 +1,6 @@
 {
     "cSpell.diagnosticLevel": "Hint",
+    "update.mode": "none",
     "redhat.telemetry.enabled": false,
     "claudeCode.allowDangerouslySkipPermissions": true,
     "claudeCode.initialPermissionMode": "bypassPermissions"
