@@ -28,6 +28,31 @@ run_npm_brewfile() {
   NPM_CONFIG_PREFIX="$HOME/.local" brew bundle --file="$brewfile" || NPM_CONFIG_PREFIX="$HOME/.local" brew bundle --file="$brewfile"
 }
 
+install_node_lts() {
+  local nvm_prefix=""
+  local nvm_script=""
+
+  echo "==> Installing latest LTS Node with nvm..."
+  export NVM_DIR="$HOME/.nvm"
+  mkdir -p "$NVM_DIR"
+
+  if ! nvm_prefix="$(brew --prefix nvm 2>/dev/null)"; then
+    brew install nvm
+    nvm_prefix="$(brew --prefix nvm)"
+  fi
+
+  nvm_script="$nvm_prefix/nvm.sh"
+  if [ ! -s "$nvm_script" ]; then
+    echo "ERROR: nvm.sh not found at $nvm_script."
+    return 1
+  fi
+
+  . "$nvm_script"
+  nvm install --lts
+  nvm alias default 'lts/*'
+  nvm use default
+}
+
 vscode_extension_command() {
   command -v code || command -v codium || command -v cursor || command -v code-insiders
 }
@@ -245,6 +270,8 @@ for PROFILE_BREWFILE_NAME in $(profile_brewfile_names "$CURRENT_PROFILE"); do
     run_profile_brewfile "$CURRENT_PROFILE" "$PROFILE_BREWFILE_NAME" "$PROFILE_BREWFILE" "$BREWFILE_PROFILE packages" "$TOLERATE_BREW_FAILURE"
   fi
 done
+
+install_node_lts
 
 NPM_BREWFILE="$(chezmoi source-path)/Brewfile.npm"
 run_npm_brewfile "$NPM_BREWFILE"

@@ -137,6 +137,14 @@ export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
 
 export PATH="$HOME/.local/bin:$PATH"
 
+# --- nvm / Node.js ---
+export NVM_DIR="$HOME/.nvm"
+NVM_HOMEBREW_PREFIX="$(brew --prefix nvm 2>/dev/null)"
+if [ -n "$NVM_HOMEBREW_PREFIX" ]; then
+  [ -s "$NVM_HOMEBREW_PREFIX/nvm.sh" ] && source "$NVM_HOMEBREW_PREFIX/nvm.sh"
+  [ -s "$NVM_HOMEBREW_PREFIX/etc/bash_completion.d/nvm" ] && source "$NVM_HOMEBREW_PREFIX/etc/bash_completion.d/nvm"
+fi
+
 # --- Profile-specific config ---
 {{- if or (eq .profile "work") (eq .profile "admin") (eq .profile "user") }}
 # Work profile extras

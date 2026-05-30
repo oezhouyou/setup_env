@@ -1,5 +1,5 @@
 # CLI tools
-brew "node"
+brew "nvm"
 brew "uv"
 brew "neonctl"
 brew "gh"

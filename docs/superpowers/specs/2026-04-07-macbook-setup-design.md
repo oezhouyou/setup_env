@@ -45,7 +45,7 @@ On a fresh Mac, run either:
 
 ```ruby
 # CLI tools
-brew "node"
+brew "nvm"
 brew "uv"
 brew "neonctl"
 

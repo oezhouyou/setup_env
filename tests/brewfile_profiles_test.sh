@@ -46,6 +46,16 @@ if grep -q '^cask "azure-cli"$' "$ROOT/Brewfile.admin" "$ROOT/Brewfile.client"; 
   exit 1
 fi
 
+if ! grep -q '^brew "nvm"$' "$ROOT/Brewfile"; then
+  echo "Brewfile should install nvm as the Node version manager."
+  exit 1
+fi
+
+if grep -q '^brew "node"$' "$ROOT/Brewfile"; then
+  echo "Brewfile should not install raw Node directly."
+  exit 1
+fi
+
 if ! grep -q '^cask "codex-app"$' "$ROOT/Brewfile.admin"; then
   echo "Brewfile.admin should include the Codex desktop app."
   exit 1
@@ -112,6 +122,9 @@ for weekly_pattern in \
   'SCRIPT_DIR=' \
   'chezmoi git -- pull --ff-only' \
   'PATH=.*\$HOME/.local/bin.*/opt/homebrew/bin' \
+  'NVM_DIR="\$HOME/.nvm"' \
+  'NVM_HOMEBREW_PREFIX=' \
+  'nvm use default' \
   'NPM_CONFIG_PREFIX="\$HOME/.local"' \
   'NPM_BREWFILE="\${NPM_BREWFILE:-\$SCRIPT_DIR/Brewfile.npm}"'
 do
@@ -120,6 +133,11 @@ do
     exit 1
   fi
 done
+
+if grep -q '^export NPM_CONFIG_PREFIX=' "$ROOT/run_weekly_update.sh"; then
+  echo "run_weekly_update.sh should not export NPM_CONFIG_PREFIX before loading nvm."
+  exit 1
+fi
 
 if ! grep -q 'run_weekly_update.sh' "$ROOT/.chezmoiignore"; then
   echo ".chezmoiignore should keep run_weekly_update.sh in the source repo only."
@@ -215,6 +233,57 @@ for privileged_profile in admin work client ""; do
   fi
 done
 
+fake_nvm_prefix="$temp_home/nvm-prefix"
+nvm_home="$temp_home/node-home"
+nvm_calls="$temp_home/nvm-calls"
+mkdir -p "$fake_nvm_prefix" "$nvm_home"
+cat > "$fake_nvm_prefix/nvm.sh" <<'EOF'
+nvm() {
+  printf '%s\n' "$*" >> "$NVM_CALLS"
+}
+EOF
+
+brew() {
+  if [ "$*" = "--prefix nvm" ]; then
+    printf '%s\n' "$fake_nvm_prefix"
+    return 0
+  fi
+
+  echo "unexpected brew call while testing install_node_lts: $*" >&2
+  return 42
+}
+
+saved_home="$HOME"
+HOME="$nvm_home" NVM_CALLS="$nvm_calls" install_node_lts
+HOME="$saved_home"
+unset -f brew
+
+if [ ! -d "$nvm_home/.nvm" ]; then
+  echo "install_node_lts should create ~/.nvm for Homebrew-managed nvm."
+  exit 1
+fi
+
+expected_nvm_calls="$(printf 'install --lts\nalias default lts/*\nuse default\n')"
+actual_nvm_calls="$(cat "$nvm_calls")"
+if [ "$actual_nvm_calls" != "$expected_nvm_calls" ]; then
+  echo "install_node_lts should install LTS Node through nvm and make it default."
+  echo "Expected:"
+  echo "$expected_nvm_calls"
+  echo "Actual:"
+  echo "$actual_nvm_calls"
+  exit 1
+fi
+
+if ! awk '
+  /for PROFILE_BREWFILE_NAME/ { in_main = 1 }
+  in_main && /^[[:space:]]*install_node_lts$/ { saw_nvm = 1 }
+  in_main && /^[[:space:]]*run_npm_brewfile "\$NPM_BREWFILE"$/ && saw_nvm { found = 1 }
+  END { exit found ? 0 : 1 }
+' "$ROOT/bootstrap.sh"; then
+  echo "bootstrap.sh should install/use nvm LTS Node before installing npm CLI tools."
+  exit 1
+fi
+
 saved_home="$HOME"
 HOME="$temp_home"
 captured_brew_args=""
@@ -294,5 +363,15 @@ fi
 
 if ! grep -q '\.client_aliases' <<<"$client_zsh"; then
   echo "client profile should source ~/.client_aliases."
+  exit 1
+fi
+
+if ! grep -q 'NVM_DIR="\$HOME/.nvm"' <<<"$client_zsh"; then
+  echo "zsh config should set NVM_DIR for nvm-managed Node."
+  exit 1
+fi
+
+if ! grep -q 'nvm.sh' <<<"$client_zsh"; then
+  echo "zsh config should source nvm.sh when Homebrew nvm is installed."
   exit 1
 fi

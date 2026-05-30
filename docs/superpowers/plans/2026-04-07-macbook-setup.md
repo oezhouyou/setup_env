@@ -63,7 +63,7 @@ git commit -m "chore: init repo with design spec"
 
 ```ruby
 # CLI tools
-brew "node"
+brew "nvm"
 brew "uv"
 brew "neonctl"
 
