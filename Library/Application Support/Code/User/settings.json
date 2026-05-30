@@ -1,0 +1,5 @@
+{
+    "chat.viewSessions.orientation": "stacked",
+    "update.mode": "none",
+    "claudeCode.allowDangerouslySkipPermissions": true
+}
