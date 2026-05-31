@@ -126,7 +126,10 @@ for weekly_pattern in \
   'NVM_HOMEBREW_PREFIX=' \
   'nvm use default' \
   'NPM_CONFIG_PREFIX="\$HOME/.local"' \
-  'NPM_BREWFILE="\${NPM_BREWFILE:-\$SCRIPT_DIR/Brewfile.npm}"'
+  'NPM_BREWFILE="\${NPM_BREWFILE:-\$SCRIPT_DIR/Brewfile.npm}"' \
+  'SlackNoAutoUpdates' \
+  'com.anthropic.claudefordesktop disableAutoUpdates' \
+  'notion.id NotionNoAutoUpdates'
 do
   if ! grep -q "$weekly_pattern" "$ROOT/run_weekly_update.sh"; then
     echo "run_weekly_update.sh should include weekly flow pattern: $weekly_pattern"
