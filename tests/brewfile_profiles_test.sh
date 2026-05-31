@@ -56,6 +56,11 @@ if grep -q '^brew "node"$' "$ROOT/Brewfile"; then
   exit 1
 fi
 
+if ! grep -q '^brew "pyenv"$' "$ROOT/Brewfile"; then
+  echo "Brewfile should install pyenv as the Python version manager."
+  exit 1
+fi
+
 if ! grep -q '^cask "codex-app"$' "$ROOT/Brewfile.admin"; then
   echo "Brewfile.admin should include the Codex desktop app."
   exit 1
@@ -129,7 +134,8 @@ for weekly_pattern in \
   'NPM_BREWFILE="\${NPM_BREWFILE:-\$SCRIPT_DIR/Brewfile.npm}"' \
   'SlackNoAutoUpdates' \
   'com.anthropic.claudefordesktop disableAutoUpdates' \
-  'notion.id NotionNoAutoUpdates'
+  'notion.id NotionNoAutoUpdates' \
+  'pyenv global'
 do
   if ! grep -q "$weekly_pattern" "$ROOT/run_weekly_update.sh"; then
     echo "run_weekly_update.sh should include weekly flow pattern: $weekly_pattern"
@@ -303,6 +309,16 @@ if ! awk '
   exit 1
 fi
 
+if ! grep -qE '^install_python_pyenv\(\)' "$ROOT/bootstrap.sh"; then
+  echo "bootstrap.sh should define install_python_pyenv to provision Python via pyenv."
+  exit 1
+fi
+
+if ! grep -qE '^[[:space:]]*install_python_pyenv$' "$ROOT/bootstrap.sh"; then
+  echo "bootstrap.sh should call install_python_pyenv."
+  exit 1
+fi
+
 saved_home="$HOME"
 HOME="$temp_home"
 captured_brew_args=""
@@ -392,5 +408,15 @@ fi
 
 if ! grep -q 'nvm.sh' <<<"$client_zsh"; then
   echo "zsh config should source nvm.sh when Homebrew nvm is installed."
+  exit 1
+fi
+
+if ! grep -q 'PYENV_ROOT' <<<"$client_zsh"; then
+  echo "zsh config should set PYENV_ROOT for pyenv-managed Python."
+  exit 1
+fi
+
+if ! grep -q 'pyenv init' <<<"$client_zsh"; then
+  echo "zsh config should initialize pyenv when it is installed."
   exit 1
 fi

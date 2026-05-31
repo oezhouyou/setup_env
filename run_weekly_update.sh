@@ -106,6 +106,23 @@ upgrade_disabled_self_updaters() {
   done
 }
 
+# Bump Python to the latest stable CPython via pyenv (mirrors the nvm LTS bump).
+update_pyenv_python() {
+  local latest
+  export PYENV_ROOT="$HOME/.pyenv"
+  if ! command -v pyenv >/dev/null 2>&1; then
+    echo "Skipping Python update; pyenv is not installed."
+    return 0
+  fi
+  latest="$(pyenv install --list 2>/dev/null | grep -E '^[[:space:]]*3\.[0-9]+\.[0-9]+$' | tail -1 | tr -d '[:space:]' || true)"
+  if [ -z "$latest" ]; then
+    echo "Skipping Python update; could not resolve latest stable version."
+    return 0
+  fi
+  pyenv install --skip-existing "$latest" || { echo "Warning: pyenv install $latest failed; continuing."; return 0; }
+  pyenv global "$latest"
+}
+
 mkdir -p "$NPM_CONFIG_PREFIX"
 
 disable_sparkle_auto_update
@@ -124,3 +141,5 @@ if [ -f "$NPM_BREWFILE" ]; then
 else
   echo "Skipping npm CLI updates; $NPM_BREWFILE not found."
 fi
+
+update_pyenv_python

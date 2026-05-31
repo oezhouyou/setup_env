@@ -53,6 +53,31 @@ install_node_lts() {
   nvm use default
 }
 
+install_python_pyenv() {
+  local latest=""
+
+  echo "==> Installing latest stable Python with pyenv..."
+  export PYENV_ROOT="$HOME/.pyenv"
+
+  if ! command -v pyenv >/dev/null 2>&1; then
+    brew install pyenv
+  fi
+  if ! command -v pyenv >/dev/null 2>&1; then
+    echo "ERROR: pyenv not found after install."
+    return 1
+  fi
+
+  # Latest stable CPython = highest plain X.Y.Z (excludes alpha/rc/dev, pypy, etc.)
+  latest="$(pyenv install --list | grep -E '^[[:space:]]*3\.[0-9]+\.[0-9]+$' | tail -1 | tr -d '[:space:]')"
+  if [ -z "$latest" ]; then
+    echo "ERROR: could not determine latest stable Python version."
+    return 1
+  fi
+
+  pyenv install --skip-existing "$latest"
+  pyenv global "$latest"
+}
+
 vscode_extension_command() {
   command -v code || command -v codium || command -v cursor || command -v code-insiders
 }
@@ -272,6 +297,7 @@ for PROFILE_BREWFILE_NAME in $(profile_brewfile_names "$CURRENT_PROFILE"); do
 done
 
 install_node_lts
+install_python_pyenv
 
 NPM_BREWFILE="$(chezmoi source-path)/Brewfile.npm"
 run_npm_brewfile "$NPM_BREWFILE"

@@ -145,6 +145,12 @@ if [ -n "$NVM_HOMEBREW_PREFIX" ]; then
   [ -s "$NVM_HOMEBREW_PREFIX/etc/bash_completion.d/nvm" ] && source "$NVM_HOMEBREW_PREFIX/etc/bash_completion.d/nvm"
 fi
 
+# --- pyenv / Python ---
+export PYENV_ROOT="$HOME/.pyenv"
+if command -v pyenv >/dev/null 2>&1; then
+  eval "$(pyenv init - zsh)"
+fi
+
 # --- Profile-specific config ---
 {{- if or (eq .profile "work") (eq .profile "admin") (eq .profile "user") }}
 # Work profile extras

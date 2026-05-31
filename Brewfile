@@ -1,5 +1,12 @@
 # CLI tools
 brew "nvm"
+brew "pyenv"
+# Python build deps so pyenv can compile CPython from source
+brew "openssl@3"
+brew "readline"
+brew "sqlite"
+brew "xz"
+brew "zlib"
 brew "uv"
 brew "neonctl"
 brew "gh"
