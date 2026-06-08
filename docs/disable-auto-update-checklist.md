@@ -39,9 +39,6 @@ Per-app self-updater keys:
 
 - **Notion** (`notion.id` → `NotionNoAutoUpdates`) — already adopted & in the weekly list.
 - **Zoom** (`sudo defaults write /Library/Preferences/us.zoom.config AU2_EnableAutoUpdate -bool false`; Zoom ≥ 5.10.6)
-- **Docker Desktop** (`/Library/Application Support/com.docker.docker/admin-settings.json`
-  → `disableUpdate`, sudo; officially Business-tier, best-effort otherwise). Docker
-  is usually already user-owned, so it can skip the Finder step.
 
 ## 3. No clean off switch (manual / network-level only)
 
@@ -61,6 +58,16 @@ No scriptable toggle exists for these as of 2026:
       #11804). Cleanest fix: drop the menu-bar app and use the Homebrew **formula**
       CLI so updates come only from brew. (Blocking `ollama.com` also breaks
       `ollama pull`.)
+- [ ] **Docker Desktop** (`com.docker.docker`) — **do NOT** use
+      `/Library/Application Support/com.docker.docker/admin-settings.json`
+      (`disableUpdate`, sudo). That file is Docker's **Settings Management**, a
+      Business-tier feature: on recent Docker Desktop (seen on 4.75) its mere presence
+      forces *enforced sign-in* ("Sign in enforced by your administrators (via
+      admin-settings.json)"), and the settings are ignored unless you're signed into a
+      Business org — so on a personal install it only adds a login wall and does **not**
+      disable updates (docker/for-win#14571). Only clean lever: the per-user GUI toggle —
+      **Settings → Software updates → uncheck "Automatically check for updates"**. The
+      brew cask `docker-desktop` stays the update path.
 
 ## Notes
 
