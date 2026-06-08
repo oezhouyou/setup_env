@@ -48,7 +48,7 @@ SPARKLE_BUNDLE_IDS=(
 # path. Their cask metadata still has auto_updates=true, so a plain `brew upgrade`
 # skips them; we force exactly these with --greedy. Every entry must be USER-OWNED
 # so brew can replace it -- a blanket `brew upgrade --greedy` would also hit
-# self-updating apps we left alone (Notion, Teams, VS Code, ...) that are
+# self-updating apps we left alone (Teams, Granola, Zoom, ...) that are
 # root-owned and fail with chown "Operation not permitted". Root-owned apps must
 # be adopted by hand first (see docs/disable-auto-update-checklist.md).
 MANAGED_UPDATE_CASKS=(
@@ -58,6 +58,8 @@ MANAGED_UPDATE_CASKS=(
   brave-browser
   linearmouse
   codex-app
+  cursor              # VS Code fork; self-updater off via update.mode:none in its settings.json
+  visual-studio-code  # self-updater off via update.mode:none in settings.json
   slack       # Squirrel app; disabled via disable_squirrel_auto_update
   claude      # Squirrel app; disabled via disable_squirrel_auto_update
   notion      # Squirrel app; adopted manually via Finder delete + brew reinstall

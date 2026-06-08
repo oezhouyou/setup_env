@@ -2,6 +2,7 @@
 
 # Apps
 cask "cursor"
+cask "visual-studio-code"
 cask "codex-app"
 cask "claude"
 cask "slack"
