@@ -4,7 +4,6 @@ set -eo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-NPM_CONFIG_PREFIX="$HOME/.local"
 export NVM_DIR="$HOME/.nvm"
 
 NPM_BREWFILE="${NPM_BREWFILE:-$SCRIPT_DIR/Brewfile.npm}"
@@ -123,7 +122,32 @@ update_pyenv_python() {
   pyenv global "$latest"
 }
 
-mkdir -p "$NPM_CONFIG_PREFIX"
+# Install/upgrade the npm CLI tools listed in Brewfile.npm using the ACTIVE nvm
+# npm, so they land in the nvm node's global prefix -- the copy that is first on
+# PATH and that `claude upgrade` / `codex update` also manage. Do NOT route these
+# through `brew bundle`: it resolves npm to Homebrew's own Node (pulled in as a
+# dependency of e.g. neonctl) and installs into /opt/homebrew, where the nvm copy
+# shadows it -- so the weekly run would silently update a copy you never execute.
+# The `@latest` pins mean each run pulls the newest release and repopulates the
+# global prefix after an nvm LTS bump. Requires load_nvm_node to have run first.
+install_npm_clis() {
+  local brewfile="$1"
+  local line
+  local -a packages=()
+  while IFS= read -r line; do
+    [ -n "$line" ] && packages+=("$line")
+  done < <(awk -F'"' '/^[[:space:]]*npm[[:space:]]/ { print $2 }' "$brewfile")
+  if [ "${#packages[@]}" -eq 0 ]; then
+    echo "No npm packages declared in $brewfile; skipping."
+    return 0
+  fi
+  if ! command -v npm >/dev/null 2>&1; then
+    echo "Skipping npm CLI updates; npm (nvm) is not available."
+    return 0
+  fi
+  echo "==> Updating npm CLI tools..."
+  npm install -g "${packages[@]}" || echo "Warning: npm install of CLI tools failed; continuing."
+}
 
 disable_sparkle_auto_update
 disable_squirrel_auto_update
@@ -134,7 +158,7 @@ upgrade_disabled_self_updaters
 
 if [ -f "$NPM_BREWFILE" ]; then
   if load_nvm_node; then
-    NPM_CONFIG_PREFIX="$NPM_CONFIG_PREFIX" /opt/homebrew/bin/brew bundle --file="$NPM_BREWFILE"
+    install_npm_clis "$NPM_BREWFILE"
   else
     echo "Skipping npm CLI updates; nvm is not installed."
   fi

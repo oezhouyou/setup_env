@@ -130,7 +130,8 @@ for weekly_pattern in \
   'NVM_DIR="\$HOME/.nvm"' \
   'NVM_HOMEBREW_PREFIX=' \
   'nvm use default' \
-  'NPM_CONFIG_PREFIX="\$HOME/.local"' \
+  'install_npm_clis "\$NPM_BREWFILE"' \
+  'npm install -g "\${packages\[@\]}"' \
   'NPM_BREWFILE="\${NPM_BREWFILE:-\$SCRIPT_DIR/Brewfile.npm}"' \
   'SlackNoAutoUpdates' \
   'com.anthropic.claudefordesktop disableAutoUpdates' \
@@ -319,35 +320,35 @@ if ! grep -qE '^[[:space:]]*install_python_pyenv$' "$ROOT/bootstrap.sh"; then
   exit 1
 fi
 
+# npm CLIs must be installed with the active nvm npm (`npm install -g`), NOT via
+# `brew bundle`. brew bundle resolves npm to Homebrew's own Node and installs into
+# /opt/homebrew, which the nvm copy on PATH shadows -- so the install would never
+# touch the copy you actually run. Installing through the nvm npm targets the nvm
+# global prefix, the same place `claude upgrade` / `codex update` manage.
 saved_home="$HOME"
 HOME="$temp_home"
-captured_brew_args=""
-captured_npm_prefix=""
+captured_npm_args=""
 brew() {
-  captured_brew_args="$*"
-  captured_npm_prefix="${NPM_CONFIG_PREFIX:-}"
+  echo "run_npm_brewfile must not call brew bundle for npm packages: $*" >&2
+  exit 42
+}
+npm() {
+  if [ "$1" = "install" ]; then
+    captured_npm_args="$*"
+  fi
 }
 
 run_npm_brewfile "$ROOT/Brewfile.npm"
 HOME="$saved_home"
 
-if [ "$captured_brew_args" != "bundle --file=$ROOT/Brewfile.npm" ]; then
-  echo "npm Brewfile should be installed through brew bundle."
-  echo "Actual: $captured_brew_args"
+expected_npm_args="install -g $(awk -F'"' '/^[[:space:]]*npm[[:space:]]/ { print $2 }' "$ROOT/Brewfile.npm" | tr '\n' ' ' | sed 's/ $//')"
+if [ "$captured_npm_args" != "$expected_npm_args" ]; then
+  echo "npm CLIs should be installed via 'npm install -g' with the Brewfile.npm packages."
+  echo "Expected: $expected_npm_args"
+  echo "Actual:   $captured_npm_args"
   exit 1
 fi
-
-if [ "$captured_npm_prefix" != "$temp_home/.local" ]; then
-  echo "npm Brewfile should install CLI tools into ~/.local for predictable user-level updates."
-  echo "Actual: $captured_npm_prefix"
-  exit 1
-fi
-
-if [ ! -d "$temp_home/.local" ]; then
-  echo "npm Brewfile should create ~/.local before using it as npm prefix."
-  exit 1
-fi
-unset -f brew
+unset -f brew npm
 
 mkdir -p "$temp_home/bin"
 

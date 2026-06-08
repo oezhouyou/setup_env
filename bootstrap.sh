@@ -16,16 +16,35 @@ run_brew_bundle() {
   fi
 }
 
+# Install the npm CLI tools listed in Brewfile.npm using the ACTIVE nvm npm, so
+# they land in the nvm node's global prefix -- the copy that is first on PATH and
+# that `claude upgrade` / `codex update` also manage. Do NOT route these through
+# `brew bundle`: it resolves npm to Homebrew's own Node (pulled in as a dependency
+# of e.g. neonctl) and installs into /opt/homebrew, where the nvm copy shadows it.
+# Requires install_node_lts to have run first so `npm` is the nvm npm.
 run_npm_brewfile() {
   local brewfile="$1"
+  local line
+  local -a packages=()
 
   if [ ! -f "$brewfile" ]; then
     return 0
   fi
 
+  while IFS= read -r line; do
+    [ -n "$line" ] && packages+=("$line")
+  done < <(awk -F'"' '/^[[:space:]]*npm[[:space:]]/ { print $2 }' "$brewfile")
+  if [ "${#packages[@]}" -eq 0 ]; then
+    return 0
+  fi
+
+  if ! command -v npm >/dev/null 2>&1; then
+    echo "Skipping npm CLI tools; npm (nvm) is not available."
+    return 0
+  fi
+
   echo "==> Installing npm CLI tools..."
-  mkdir -p "$HOME/.local"
-  NPM_CONFIG_PREFIX="$HOME/.local" brew bundle --file="$brewfile" || NPM_CONFIG_PREFIX="$HOME/.local" brew bundle --file="$brewfile"
+  npm install -g "${packages[@]}"
 }
 
 install_node_lts() {
