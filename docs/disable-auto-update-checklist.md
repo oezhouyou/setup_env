@@ -13,6 +13,11 @@ Disabled on every weekly run, then force-upgraded via `brew upgrade --cask --gre
   - Slack (`com.tinyspeck.slackmacgap` → `SlackNoAutoUpdates`)
   - Claude (`com.anthropic.claudefordesktop` → `disableAutoUpdates`, Anthropic's
     enterprise key; documented as MDM-only, so verify it sticks on your build)
+  - Granola (`com.granola.app`) — no defaults key. Its Squirrel updater applies
+    downloads via `Squirrel.framework/Versions/A/Resources/ShipIt`, which
+    `disable_granola_shipit` neuters with `chmod 000` after upgrading it
+    (re-applied every run, since `brew` restores an exec ShipIt on each upgrade).
+    Requires the one-time adopt in §2 first (it installs root-owned).
 
 VS Code and Cursor are handled declaratively via `"update.mode": "none"` in their
 tracked `settings.json` (not by the weekly script).
@@ -38,6 +43,10 @@ cannot chown them, and on macOS 13+ **App Management blocks the chown even with
 Per-app self-updater keys:
 
 - **Notion** (`notion.id` → `NotionNoAutoUpdates`) — already adopted & in the weekly list.
+- **Granola** (`com.granola.app`) — no key; the self-updater is neutered by
+  `chmod 000`-ing its Squirrel `ShipIt` binary (`disable_granola_shipit`, see §1).
+  Already adopted & in the weekly list. After the reinstall in step 3, run once:
+  `chmod 000 "/Applications/Granola.app/Contents/Frameworks/Squirrel.framework/Versions/A/Resources/ShipIt"`.
 - **Zoom** (`sudo defaults write /Library/Preferences/us.zoom.config AU2_EnableAutoUpdate -bool false`; Zoom ≥ 5.10.6)
 
 ## 3. No clean off switch (manual / network-level only)
@@ -51,9 +60,6 @@ No scriptable toggle exists for these as of 2026:
 - [ ] **Raycast** (`com.raycast.macos`) — custom in-house updater (not Sparkle/
       Squirrel). No toggle/key. Only option: block its release host in LuLu /
       Little Snitch.
-- [ ] **Granola** (`com.granola.app`) — Electron/Squirrel, no key. Block
-      `download.granola.ai` + `dr2v7l5emb758.cloudfront.net`, or `chmod 000` its
-      `Squirrel.framework/.../ShipIt`.
 - [ ] **Ollama** (`com.electron.ollama`) — no in-app disable (issues #4498/#6024/
       #11804). Cleanest fix: drop the menu-bar app and use the Homebrew **formula**
       CLI so updates come only from brew. (Blocking `ollama.com` also breaks

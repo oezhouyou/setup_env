@@ -48,7 +48,7 @@ SPARKLE_BUNDLE_IDS=(
 # path. Their cask metadata still has auto_updates=true, so a plain `brew upgrade`
 # skips them; we force exactly these with --greedy. Every entry must be USER-OWNED
 # so brew can replace it -- a blanket `brew upgrade --greedy` would also hit
-# self-updating apps we left alone (Teams, Granola, Zoom, ...) that are
+# self-updating apps we left alone (Teams, Zoom, Raycast, ...) that are
 # root-owned and fail with chown "Operation not permitted". Root-owned apps must
 # be adopted by hand first (see docs/disable-auto-update-checklist.md).
 MANAGED_UPDATE_CASKS=(
@@ -63,6 +63,7 @@ MANAGED_UPDATE_CASKS=(
   slack       # Squirrel app; disabled via disable_squirrel_auto_update
   claude      # Squirrel app; disabled via disable_squirrel_auto_update
   notion      # Squirrel app; adopted manually via Finder delete + brew reinstall
+  granola     # Squirrel app, no key; updater neutered via disable_granola_shipit (chmod 000 ShipIt)
 )
 
 disable_sparkle_auto_update() {
@@ -105,6 +106,28 @@ upgrade_disabled_self_updaters() {
     /opt/homebrew/bin/brew upgrade --cask --greedy "$cask" \
       || echo "Warning: failed to upgrade cask $cask; continuing."
   done
+}
+
+# Granola (com.granola.app) is a Squirrel/Electron app with NO self-updater
+# defaults key. Its updater applies downloads through Squirrel's ShipIt helper, so
+# we neuter that binary (chmod 000): the app can no longer swap itself and re-root
+# to root:wheel. Must run AFTER upgrade_disabled_self_updaters, because a fresh
+# `brew upgrade` replaces the whole bundle with an exec-able ShipIt. Only touch a
+# user-owned Granola -- a root-owned one hasn't been adopted yet (see the
+# checklist) and chmod would need elevation we deliberately don't take here.
+# brew can still delete the 000 file it owns on the next upgrade (delete needs
+# write on the parent dir, not the file), so this does not wedge future upgrades.
+disable_granola_shipit() {
+  local app="/Applications/Granola.app"
+  local shipit="$app/Contents/Frameworks/Squirrel.framework/Versions/A/Resources/ShipIt"
+  [ -e "$shipit" ] || return 0
+  if [ "$(stat -f '%Su' "$app" 2>/dev/null)" != "$(id -un)" ]; then
+    echo "Skipping Granola updater block: $app is not user-owned; adopt it first (see checklist)."
+    return 0
+  fi
+  chmod 000 "$shipit" 2>/dev/null \
+    && echo "Neutered Granola self-updater (chmod 000 ShipIt)." \
+    || echo "Warning: could not chmod Granola ShipIt; continuing."
 }
 
 # Bump Python to the latest stable CPython via pyenv (mirrors the nvm LTS bump).
@@ -156,6 +179,7 @@ disable_squirrel_auto_update
 
 /opt/homebrew/bin/brew update && /opt/homebrew/bin/brew upgrade
 upgrade_disabled_self_updaters
+disable_granola_shipit  # re-neuter ShipIt after brew restores an exec copy
 /opt/homebrew/bin/chezmoi git -- pull --ff-only || true
 
 if [ -f "$NPM_BREWFILE" ]; then
